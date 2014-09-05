@@ -55,7 +55,10 @@ def determine_row_type(row):
     elif is_data_row:
         return "cell_data"
 
-input_file_path = sys.argv[1]
+if len(sys.argv) > 1:
+    input_file_path = sys.argv[1]
+else:
+    input_file_path = raw_input("Enter filename:")
 input_file_path_no_extension = os.path.splitext(input_file_path)[0]
 basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
 folder_name = input_file_path_no_extension + "_data_extracted"
