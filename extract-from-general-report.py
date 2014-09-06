@@ -67,12 +67,14 @@ if not os.path.exists(folder_name):
     os.mkdir(folder_name)
 full_basename = os.path.join(folder_name, basename_no_extension)
 
-
-cycle_summary_file = open(full_basename + "_all_cycle_summary.csv", 'w')
-cycle_summary_file.write("CycleID, charge capacity [mAh], discharge capacity [mAh]\n")
 with open(input_file_path) as general_report:
     header_lines_to_skip = 3
     step_type = None
+    output_delimiter = '\t'
+    header_comment_character = '#'
+    output_file_extension = '.dat'
+    cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
+    cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
     for i, line in enumerate(general_report):
         if i < header_lines_to_skip:
             continue # don't process header lines
@@ -84,24 +86,24 @@ with open(input_file_path) as general_report:
             print "Extracting cycle #",cycle_id
             capacity_charge = cols[colnum('C')]
             capacity_discharge = cols[colnum('D')]
-            cycle_summary_file.write(cycle_id +","+ capacity_charge +","+ capacity_charge + "\n")
+            cycle_summary_file.write(output_delimiter.join([cycle_id, capacity_charge, capacity_charge]) + "\n")
         elif row_type == "step_settings":
             step_type = cols[colnum('E')].strip()
             #print step_type
             if step_type == "CC_Chg":
-                filename = full_basename + "_charge_" + cycle_id + ".csv"
+                filename = full_basename + "_charge_" + cycle_id + output_file_extension
                 f = open(filename, 'w')
-                f.write("V,mAh\n")
+                f.write(header_comment_character+"mAh"+output_delimiter+"V\n")
             elif step_type == "CC_DChg":
-                filename = full_basename + "_discharge_" + cycle_id + ".csv"
+                filename = full_basename + "_discharge_" + cycle_id + output_file_extension
                 f = open(filename, 'w')
-                f.write("V,mAh\n")
+                f.write(header_comment_character+"mAh"+output_delimiter+"V\n")
         elif row_type == "cell_data":
             if step_type == "CC_Chg" or step_type == "CC_DChg":
                 V = cols[colnum('I')]
                 mAh = cols[colnum('O')]
                 #print "line "+str(i)+" mAh: "+mAh
-                f.write(V +","+ mAh + "\n")
+                f.write(mAh + output_delimiter + V + "\n")
                 #print V, mAh
 
 cycle_summary_file.close()
