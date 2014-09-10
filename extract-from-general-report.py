@@ -2,6 +2,7 @@
 import sys
 import os
 import string
+import argparse
 
 # TODO: dictionaries for associating values as strings to spreadsheet column letters.
 #cycle_summary_dict = {'Cycle ID': 'A', 'Charge capacity [mAh]': 'B', 'Discharge capacity [mAh]': 'C'}
@@ -55,55 +56,75 @@ def determine_row_type(row):
     elif is_data_row:
         return "cell_data"
 
-if len(sys.argv) > 1:
-    input_file_path = sys.argv[1]
-else:
-    input_file_path = raw_input("Enter filename:")
-input_file_path_no_extension = os.path.splitext(input_file_path)[0]
-basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
-folder_name = input_file_path_no_extension + "_data_extracted"
-print "Saving to folder",folder_name
-if not os.path.exists(folder_name):
-    os.mkdir(folder_name)
-full_basename = os.path.join(folder_name, basename_no_extension)
+def main():
 
-with open(input_file_path) as general_report:
-    header_lines_to_skip = 3
-    step_type = None
-    output_delimiter = '\t'
-    header_comment_character = '#'
-    output_file_extension = '.dat'
-    cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
-    cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
-    for i, line in enumerate(general_report):
-        if i < header_lines_to_skip:
-            continue # don't process header lines
-        cols = line.split("\t")
-        row_type = determine_row_type(cols)
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
+        parser.add_argument('-m', '--mass', help='Plot title',required=False)
+        parser.add_argument('-i', '--input', help='Input file',required=True)
+        args = parser.parse_args()
+        input_file_path = args.input
+        if args.mass:
+            mass = float(args.mass)
+        else:
+            mass = None
+    else:
+        input_file_path = raw_input("Enter filename:")
+        mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
+        if mass_input != "":
+            mass = float(mass_input)
+        else:
+            mass = None
 
-        if row_type == "cycle_summary":
-            cycle_id = cols[colnum('A')]
-            print "Extracting cycle #",cycle_id
-            capacity_charge = cols[colnum('C')]
-            capacity_discharge = cols[colnum('D')]
-            cycle_summary_file.write(output_delimiter.join([cycle_id, capacity_charge, capacity_charge]) + "\n")
-        elif row_type == "step_settings":
-            step_type = cols[colnum('E')].strip()
-            #print step_type
-            if step_type == "CC_Chg":
-                filename = full_basename + "_charge_" + cycle_id + output_file_extension
-                f = open(filename, 'w')
-                f.write(header_comment_character+"mAh"+output_delimiter+"V\n")
-            elif step_type == "CC_DChg":
-                filename = full_basename + "_discharge_" + cycle_id + output_file_extension
-                f = open(filename, 'w')
-                f.write(header_comment_character+"mAh"+output_delimiter+"V\n")
-        elif row_type == "cell_data":
-            if step_type == "CC_Chg" or step_type == "CC_DChg":
-                V = cols[colnum('I')]
-                mAh = cols[colnum('O')]
-                #print "line "+str(i)+" mAh: "+mAh
-                f.write(mAh + output_delimiter + V + "\n")
-                #print V, mAh
+    input_file_path_no_extension = os.path.splitext(input_file_path)[0]
+    basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
+    folder_name = input_file_path_no_extension + "_data_extracted"
+    print "Saving to folder",folder_name
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+    full_basename = os.path.join(folder_name, basename_no_extension)
 
-cycle_summary_file.close()
+    with open(input_file_path) as general_report:
+        header_lines_to_skip = 3
+        step_type = None
+        output_delimiter = '\t'
+        header_comment_character = '#'
+        output_file_extension = '.dat'
+        cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
+        cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
+        all_cycles = []
+        for i, line in enumerate(general_report):
+            if i < header_lines_to_skip:
+                continue # don't process header lines
+            cols = line.split("\t")
+            row_type = determine_row_type(cols)
+
+            if row_type == "cycle_summary":
+                cycle_id = int(cols[colnum('A')])
+                print "Extracting cycle #",str(cycle_id)
+                capacity_charge = cols[colnum('C')]
+                capacity_discharge = cols[colnum('D')]
+                cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
+            elif row_type == "step_settings":
+                step_type = cols[colnum('E')].strip()
+                #print step_type
+                if step_type == "CC_Chg":
+                    filename = full_basename + "_charge" + str(cycle_id) + output_file_extension
+                    f = open(filename, 'w')
+                    f.write(header_comment_character + "mAh" + output_delimiter + "V\n")
+                elif step_type == "CC_DChg":
+                    filename = full_basename + "_discharge" + str(cycle_id) + output_file_extension
+                    f = open(filename, 'w')
+                    f.write(header_comment_character + "mAh" + output_delimiter + "V\n")
+            elif row_type == "cell_data":
+                if step_type == "CC_Chg" or step_type == "CC_DChg":
+                    V = cols[colnum('I')]
+                    mAh = cols[colnum('O')]
+                    #print "line "+str(i)+" mAh: "+mAh
+                    f.write(mAh + output_delimiter + V + "\n")
+                    #print V, mAh
+
+    cycle_summary_file.close()
+
+if __name__ == "__main__":
+    main()
