@@ -111,15 +111,20 @@ def main():
                 if step_type == "CC_Chg":
                     filename = full_basename + "_charge" + str(cycle_id) + output_file_extension
                     f = open(filename, 'w')
-                    f.write(header_comment_character + "mAh" + output_delimiter + "V\n")
+                    f.write(header_comment_character + "mAh/g" + output_delimiter + "V\n")
                 elif step_type == "CC_DChg":
                     filename = full_basename + "_discharge" + str(cycle_id) + output_file_extension
                     f = open(filename, 'w')
-                    f.write(header_comment_character + "mAh" + output_delimiter + "V\n")
+                    f.write(header_comment_character + "mAh/g" + output_delimiter + "V\n")
             elif row_type == "cell_data":
                 if step_type == "CC_Chg" or step_type == "CC_DChg":
                     V = cols[colnum('I')]
-                    mAh = cols[colnum('O')]
+                    if mass:
+                        mAh = str(1000*float(cols[colnum('Q')])/mass)
+                    else:
+                        mAh = cols[colnum('Q')]
+                    assert V != ""
+                    assert mAh != ""
                     #print "line "+str(i)+" mAh: "+mAh
                     f.write(mAh + output_delimiter + V + "\n")
                     #print V, mAh
