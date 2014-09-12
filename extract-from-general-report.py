@@ -65,16 +65,16 @@ def main():
         args = parser.parse_args()
         input_file_path = args.input
         if args.mass:
-            mass = float(args.mass)
+            mass_g = float(args.mass)/1000.0
         else:
-            mass = None
+            mass_g = None
     else:
         input_file_path = raw_input("Enter filename:")
         mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
         if mass_input != "":
-            mass = float(mass_input)
+            mass_g = float(mass_input)/1000.0
         else:
-            mass = None
+            mass_g = None
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
@@ -91,7 +91,10 @@ def main():
         header_comment_character = '#'
         output_file_extension = '.dat'
         cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
-        cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
+        if mass_g:
+            cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh/g]"+output_delimiter+ "discharge capacity [mAh/g]\n")
+        else:
+            cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
         all_cycles = []
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
@@ -103,8 +106,13 @@ def main():
                 cycle_id = int(cols[colnum('A')])
                 print "Extracting cycle #",str(cycle_id)
                 capacity_charge = cols[colnum('C')]
-                capacity_discharge = cols[colnum('D')]
-                cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
+                capacity_discharge = cols[colnum('E')]
+                if mass_g:
+                    specific_capacity_charge = float(capacity_charge)/(mass_g)
+                    specific_capacity_discharge = float(capacity_discharge)/(mass_g)
+                    cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(specific_capacity_charge), str(specific_capacity_charge)]) + "\n")
+                else:
+                    cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
             elif row_type == "step_settings":
                 step_type = cols[colnum('E')].strip()
                 #print step_type
@@ -119,14 +127,20 @@ def main():
             elif row_type == "cell_data":
                 if step_type == "CC_Chg" or step_type == "CC_DChg":
                     V = cols[colnum('I')]
-                    if mass:
-                        mAh = str(1000*float(cols[colnum('Q')])/mass)
+                    if mass_g:
+                        mAh_per_g = str(float(cols[colnum('Q')])/(mass_g))
                     else:
                         mAh = cols[colnum('Q')]
                     assert V != ""
-                    assert mAh != ""
+                    if mass_g:
+                        assert mAh_per_g != ""
+                    else:
+                        assert mAh != ""
                     #print "line "+str(i)+" mAh: "+mAh
-                    f.write(mAh + output_delimiter + V + "\n")
+                    if mass_g:
+                        f.write(mAh_per_g + output_delimiter + V + "\n")
+                    else:
+                        f.write(mAh + output_delimiter + V + "\n")
                     #print V, mAh
 
     cycle_summary_file.close()
