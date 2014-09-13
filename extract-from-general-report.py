@@ -110,7 +110,7 @@ def main():
                 if mass_g:
                     specific_capacity_charge = float(capacity_charge)/(mass_g)
                     specific_capacity_discharge = float(capacity_discharge)/(mass_g)
-                    cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(specific_capacity_charge), str(specific_capacity_charge)]) + "\n")
+                    cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(specific_capacity_charge), str(specific_capacity_discharge)]) + "\n")
                 else:
                     cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
             elif row_type == "step_settings":
