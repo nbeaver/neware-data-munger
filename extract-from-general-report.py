@@ -7,25 +7,91 @@ import argparse
 # TODO: dictionaries for associating values as strings to spreadsheet column letters.
 #cycle_summary_dict = {'Cycle ID': 'A', 'Charge capacity [mAh]': 'B', 'Discharge capacity [mAh]': 'C'}
 
-def colnum(column_name):
-    if len(column_name) > 2:
+# mapping for BTSDA 7.4.1.824 general report (.txt)
+columns_BTSDA = {
+    'cycle' : {
+        'Cycle ID' : 'A',
+        'Cycle charge capacity' : 'C',
+        'Cycle discharge capacity' : 'E',
+    },
+    'step' : {
+        'Step ID' : 'C',
+        'Step type' : 'E',
+        'Duration [H:MM:SS.000]' : 'F',
+    },
+    'datum' : {
+        'Datum ID' : 'E',
+        'Step time elapsed' : 'G',
+        'V' : 'I',
+        'mAh' : 'Q',
+        'mA' : 'K',
+        'Timestamp' : 'AA',
+    },
+}
+
+# mapping for BtsControl general report (.txt)
+columns_BtsControl = {
+    'cycle' : {
+        'Cycle ID' : 'A',
+        'Cycle charge capacity [mAh]' : 'C',
+        'Cycle discharge capacity [mAh]' : 'E',
+    },
+    'step' : {
+        'Step ID' : 'C',
+        'Step type' : 'E',
+        'Duration [H:MM:SS.000]' : 'F',
+        'Capacity [mAh]' : 'H',
+    },
+    'datum' : {
+        'Datum ID' : 'E',
+        'Step time elapsed' : 'G',
+        'V' : 'I',
+        'mA' : 'K',
+        'mAh' : 'O',
+        'mAh/g' : 'Q',
+        'Timestamp' : 'W',
+    },
+}
+
+def colnum(column_letter):
+    """Given a column letter from A to ZZ, return a column number starting from 0."""
+    assert type(column_letter) is str, "Column letter not a string:"+str(column_letter)+" is type "+str(type(column_letter))
+    if len(column_letter) > 2:
+        # We don't go past ZZ.
         raise NotImplementedError
-    for letter in column_name:
+    for letter in column_letter:
         if letter not in string.uppercase:
             raise ValueError
     
     column_letter_to_number_dict = {}
     for i, capital_letter in enumerate(string.uppercase):
         column_letter_to_number_dict[capital_letter] = i
-    if len(column_name) == 1:
+    if len(column_letter) == 1:
         return column_letter_to_number_dict[letter]
-    elif len(column_name) == 2:
-        first_letter = column_name[0]
-        second_letter = column_name[1]
+    elif len(column_letter) == 2:
+        first_letter = column_letter[0]
+        second_letter = column_letter[1]
         return len(string.uppercase)*(1 + column_letter_to_number_dict[first_letter]) + column_letter_to_number_dict[second_letter]
 
 # Since we start at zero, it should get to AA at column 26.
 assert colnum('AA') == len(string.uppercase)
+
+def colletter(column_number):
+    """Given a column number starting from 0, return a column letter from A to ZZ."""
+    assert type(column_number) is int, "Column number not an integer:"+str(column_number)+" is type "+str(type(column_number))
+    if column_number > colnum('ZZ'): # 701, in case you're wondering.
+        # We don't go past ZZ.
+        raise NotImplementedError
+    #TODO: deal with the fact that we may not just get capital letters.
+    if column_number < len(string.uppercase):
+        # Just one letter.
+        return string.uppercase[column_number]
+    else:
+        first_letter = string.uppercase[(column_number / len(string.uppercase)) - 1]
+        second_letter = string.uppercase[column_number % len(string.uppercase)]
+        return first_letter + second_letter
+
+assert colletter(len(string.uppercase)) == 'AA'
 
 def determine_row_type(row):
     is_cycle_summary_row = None
@@ -57,7 +123,6 @@ def determine_row_type(row):
         return "cell_data"
 
 def main():
-
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
         parser.add_argument('-m', '--mass', help='Plot title',required=False)
