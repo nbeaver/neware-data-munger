@@ -87,7 +87,9 @@ def colletter(column_number):
         # Just one letter.
         return string.uppercase[column_number]
     else:
+        # We have to subtract one since we want to go from Z to AA, not BA.
         first_letter = string.uppercase[(column_number / len(string.uppercase)) - 1]
+        # We don't have to subtract one since modulo starts from 0.
         second_letter = string.uppercase[column_number % len(string.uppercase)]
         return first_letter + second_letter
 
