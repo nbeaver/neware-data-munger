@@ -34,7 +34,8 @@ TODO
 - Capacity vs cycle number output file.
 - Put the number of the cycle at the beginning of the filename to make it easier to sort.
 - Output a file that is convenient for plotting with `Origin`_.
-- Generate an EZStat-style ``.csv`` file.
+- Process layered report output as well.
+- Generate an EZStat-style ``.csv`` file. (?)
 
 ----
 DONE

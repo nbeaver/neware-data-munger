@@ -48,8 +48,11 @@ columns_BtsControl = {
         'Voltage [V]' : 'I',
         'Current [mA]' : 'K',
         'Capacity [mAh]' : 'O',
-        'mAh/g' : 'Q',
+        'Specific capacity [mAh/g]' : 'Q',
+        'Energy [mWh]' : 'S',
+        'Energy density [mWh/g]' : 'U',
         'Timestamp' : 'W',
+        'Power [W]' : 'AE',
     },
 }
 
@@ -72,9 +75,9 @@ columns_BtsControl_xlsx = {
         'Voltage [V]' : 'E',
         'Current [mA]' : 'F',
         'Capacity [mAh]' : 'H',
-        'mAh/g' : 'I',
+        'Specific capacity [mAh/g]' : 'I',
         'Energy [mWh]' : 'J',
-        'mWh/g' : 'K',
+        'Energy density [mWh/g]' : 'K',
         'Timestamp' : 'L',
         'Power [W]' : 'P',
 
