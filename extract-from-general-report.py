@@ -207,6 +207,7 @@ def main():
         header_comment_character = '#'
         output_file_extension = '.dat'
         cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
+        grace_output_file = open(full_basename + "_grace_ascii.dat", 'w')
         if mass_g:
             cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh/g]"+output_delimiter+ "discharge capacity [mAh/g]\n")
         else:
@@ -231,9 +232,11 @@ def main():
                     cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(specific_capacity_charge), str(specific_capacity_discharge)]) + "\n")
                 else:
                     cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
+                grace_output_file.write("\n")
             elif row_type == "step":
                 step_type = cols[colnum(column_dict[row_type]['Step type'])].strip()
                 #print step_type
+                grace_output_file.write("\n")
                 if step_type == "CC_Chg":
                     filename = full_basename + "_charge" + str(cycle_id) + output_file_extension
                     f = open(filename, 'w')
@@ -259,8 +262,10 @@ def main():
                     #print "line "+str(i)+" mAh: "+mAh
                     if mass_g:
                         f.write(mAh_per_g + output_delimiter + V + "\n")
+                        grace_output_file.write(mAh_per_g + " " + V + "\n")
                     else:
                         f.write(mAh + output_delimiter + V + "\n")
+                        grace_output_file.write(mAh + " " + V + "\n")
                     #print V, mAh
                 elif step_type == "Rest":
                     pass
@@ -268,6 +273,7 @@ def main():
                     raise ValueError, "Unrecognized step type:" + step_type
 
     cycle_summary_file.close()
+    grace_output_file.close()
 
 if __name__ == "__main__":
     main()

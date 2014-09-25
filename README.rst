@@ -13,6 +13,9 @@ or::
     $ python extract-from-general-report.py
     Enter filename: input.txt
     Enter mass of active material in mg, or just press enter to calculate mAh:1.5
+
+Note that the input file must be tab-delimited,
+so keep this in mind if you export an Excel file and then convert it to a ``.csv`` file.
     
 ----
 TODO
