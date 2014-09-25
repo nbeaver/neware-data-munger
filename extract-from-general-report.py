@@ -22,9 +22,9 @@ columns_BTSDA = {
     'record' : {
         'Record Index' : 'E',
         'Step time elapsed' : 'G',
-        'V' : 'I',
-        'mAh' : 'Q',
-        'mA' : 'K',
+        'Voltage [V]' : 'I',
+        'Capacity [mAh]' : 'Q',
+        'Current [mA]' : 'K',
         'Timestamp' : 'AA',
     },
 }
@@ -45,9 +45,9 @@ columns_BtsControl = {
     'record' : {
         'Record Index' : 'E',
         'Step time elapsed' : 'G',
-        'V' : 'I',
-        'mA' : 'K',
-        'mAh' : 'O',
+        'Voltage [V]' : 'I',
+        'Current [mA]' : 'K',
+        'Capacity [mAh]' : 'O',
         'mAh/g' : 'Q',
         'Timestamp' : 'W',
     },
@@ -69,9 +69,9 @@ columns_BtsControl_xlsx = {
     'record' : {
         'Record Index' : 'C',
         'Step time elapsed' : 'D',
-        'V' : 'E',
-        'mA' : 'F',
-        'mAh' : 'H',
+        'Voltage [V]' : 'E',
+        'Current [mA]' : 'F',
+        'Capacity [mAh]' : 'H',
         'mAh/g' : 'I',
         'Energy [mWh]' : 'J',
         'mWh/g' : 'K',
@@ -167,6 +167,7 @@ def determine_row_type(row):
     elif is_record_row:
         return "record"
 
+#TODO: split this gigantic function into smaller pieces
 def main():
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
@@ -215,12 +216,10 @@ def main():
             row_type = determine_row_type(cols)
 
             if row_type == "cycle":
-                cycle_id = int(cols[colnum('A')])
-                #print int(cols[colnum('A')])
-                #print int(cols[colnum(column_dict[row_type]['Cycle ID'])])
+                cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 print "Extracting cycle #",str(cycle_id)
-                capacity_charge = cols[colnum('C')]
-                capacity_discharge = cols[colnum('E')]
+                capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity'])]
+                capacity_discharge = cols[colnum(column_dict[row_type]['Cycle discharge capacity'])]
                 if mass_g:
                     specific_capacity_charge = float(capacity_charge)/(mass_g)
                     specific_capacity_discharge = float(capacity_discharge)/(mass_g)
@@ -228,7 +227,7 @@ def main():
                 else:
                     cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_charge]) + "\n")
             elif row_type == "step":
-                step_type = cols[colnum('E')].strip()
+                step_type = cols[colnum(column_dict[row_type]['Step type'])].strip()
                 #print step_type
                 if step_type == "CC_Chg":
                     filename = full_basename + "_charge" + str(cycle_id) + output_file_extension
@@ -238,24 +237,30 @@ def main():
                     filename = full_basename + "_discharge" + str(cycle_id) + output_file_extension
                     f = open(filename, 'w')
                     f.write(header_comment_character + "mAh/g" + output_delimiter + "V\n")
+                elif step_type == "Rest":
+                    pass
+                else:
+                    raise ValueError, "Unrecognized step type:" + step_type
             elif row_type == "record":
                 if step_type == "CC_Chg" or step_type == "CC_DChg":
-                    V = cols[colnum('I')]
-                    if mass_g:
-                        mAh_per_g = str(float(cols[colnum('Q')])/(mass_g))
-                    else:
-                        mAh = cols[colnum('Q')]
+                    V = cols[colnum(column_dict[row_type]['Voltage [V]'])]
                     assert V != ""
+                    mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
+                    assert mAh != ""
+
                     if mass_g:
+                        mAh_per_g = str(float(mAh)/(mass_g))
                         assert mAh_per_g != ""
-                    else:
-                        assert mAh != ""
                     #print "line "+str(i)+" mAh: "+mAh
                     if mass_g:
                         f.write(mAh_per_g + output_delimiter + V + "\n")
                     else:
                         f.write(mAh + output_delimiter + V + "\n")
                     #print V, mAh
+                elif step_type == "Rest":
+                    pass
+                else:
+                    raise ValueError, "Unrecognized step type:" + step_type
 
     cycle_summary_file.close()
 
