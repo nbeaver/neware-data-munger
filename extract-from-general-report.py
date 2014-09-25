@@ -5,8 +5,7 @@ import os
 import string
 import argparse
 
-# TODO: dictionaries for associating values as strings to spreadsheet column letters.
-#cycle_summary_dict = {'Cycle ID': 'A', 'Charge capacity [mAh]': 'B', 'Discharge capacity [mAh]': 'C'}
+# DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
 # mapping for BTSDA 7.4.1.824 general report (.txt)
 columns_BTSDA = {
@@ -185,6 +184,7 @@ def main():
         else:
             mass_g = None
     else:
+        # TODO: see if we can infer the mass from the data.
         input_file_path = raw_input("Enter filename:")
         mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
         if mass_input != "":
