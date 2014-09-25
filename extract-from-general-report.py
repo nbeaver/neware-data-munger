@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- encoding:utf-8 -*-
 import sys
 import os
 import string
@@ -11,16 +12,16 @@ import argparse
 columns_BTSDA = {
     'cycle' : {
         'Cycle ID' : 'A',
-        'Cycle charge capacity' : 'C',
-        'Cycle discharge capacity' : 'E',
+        'Cycle charge capacity [mAh]' : 'C',
+        'Cycle discharge capacity [mAh]' : 'E',
     },
     'step' : {
-        'Step Index' : 'C',
+        'Step ID' : 'C',
         'Step type' : 'E',
         'Duration [H:MM:SS.000]' : 'F',
     },
     'record' : {
-        'Record Index' : 'E',
+        'Record ID' : 'E',
         'Step time elapsed' : 'G',
         'Voltage [V]' : 'I',
         'Capacity [mAh]' : 'Q',
@@ -37,13 +38,13 @@ columns_BtsControl = {
         'Cycle discharge capacity [mAh]' : 'E',
     },
     'step' : {
-        'Step Index' : 'C',
+        'Step ID' : 'C',
         'Step type' : 'E',
         'Duration [H:MM:SS.000]' : 'F',
         'Capacity [mAh]' : 'H',
     },
     'record' : {
-        'Record Index' : 'E',
+        'Record ID' : 'E',
         'Step time elapsed' : 'G',
         'Voltage [V]' : 'I',
         'Current [mA]' : 'K',
@@ -61,13 +62,13 @@ columns_BtsControl_xlsx = {
         'Cycle discharge capacity [mAh]' : 'C',
     },
     'step' : {
-        'Step Index' : 'B',
+        'Step ID' : 'B',
         'Step type' : 'C',
         'Duration [H:MM:SS.000]' : 'D',
         'Capacity [mAh]' : 'E',
     },
     'record' : {
-        'Record Index' : 'C',
+        'Record ID' : 'C',
         'Step time elapsed' : 'D',
         'Voltage [V]' : 'E',
         'Current [mA]' : 'F',
@@ -125,7 +126,8 @@ assert colletter(len(string.uppercase)) == 'AA'
 
 def infer_input_file_format(header_line):
     header_line = header_line.strip()
-    header_1_BtsControl_xlsx = "Cycle ID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Specific Capacity-Chg(mAh/g)  	Specific Capacity-Dchg(mAh/g)  	Chg/DChg Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(mF)  	Capacitance_DChg(mF)  	IR(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(oC)"
+    #header_1_BtsControl_xlsx = "Cycle ID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Specific Capacity-Chg(mAh/g)  	Specific Capacity-Dchg(mAh/g)  	Chg/DChg Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(mF)  	Capacitance_DChg(mF)  	IR(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(oC)"
+    header_1_BtsControl_xlsx = "Cycle ID	Cap_Chg(mAh)	Cap_DChg(mAh)	Specific Capacity-Chg(mAh/g)	Specific Capacity-Dchg(mAh/g)	Chg/DChg Efficiency(%)	Engy_Chg(mWh)	Engy_DChg(mWh)	REngy_Chg(mWh/g)	REngy_Dchg(mWh/g)	CC_Chg_Ratio(%)	CC_Chg_Cap(mAh)	Plat_Cap(mAh)	Plat_Capacity Density(mAh)	Plat_Efficiency(%)	Plat_Time(h:min:s.ms)	Capacitance_Chg(mF)	Capacitance_DChg(mF)	IR(mΩ)	Mid_value Voltage(V)	Discharge Fading Ratio(%)	Charge Time(h:min:s.ms)	Discharge Time(h:min:s.ms)	Charge IR(mΩ)	Discharge IR(mΩ)	End Temperature(oC)"
     header_1_BtsControl = "Cycle ID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Specific Capacity-Chg(mAh/g)  	Specific Capacity-Dchg(mAh/g)  	Chg/DChg Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(mF)  	Capacitance_DChg(mF)  	IR(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(oC)"
     header_1_BTSDA = "CycleID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	RCap_Chg(mAh/g)  	RCap_DChg(mAh/g)  	Charge/Discharge Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Platform_Cap(mAh)  	Platform_RCap(mAh)  	Platfrom_Efficiency(%)  	Platform_Time(h:min:s.ms)  	Capacitance_Chg(F)  	Capacitance_DChg(F)  	rd(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(?)"
     if header_line == header_1_BtsControl:
@@ -138,22 +140,25 @@ def infer_input_file_format(header_line):
         print "Header line is:",header_line
         raise NotImplementedError, "Cannot recognize datafile type."
 
-def determine_row_type(row):
+def determine_row_type(row, column_dict):
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
-    if row[colnum('A')] != "":
+    if row[colnum(column_dict['cycle']['Cycle ID'])] != "":
         is_cycle_row = True
         is_step_row = False
         is_record_row = False
     else:
         is_cycle_row = False
-        if row[colnum('C')] != "":
+        if row[colnum(column_dict['step']['Step ID'])] != "":
             is_step_row = True
             is_record_row = False
         else:
             is_step_row = False
-            is_record_row = True
+            if row[colnum(column_dict['record']['Record ID'])] != "":
+                is_record_row = True
+            else:
+                raise ValueError, "Cannot determine row type for this row:"+row
     row_types = [is_cycle_row, is_step_row, is_record_row]
     # Check that we didn't miss a type of row.
     assert all(row_type is not None for row_type in row_types)
@@ -213,13 +218,13 @@ def main():
                     column_dict = infer_input_file_format(line)
                 continue # don't process header lines
             cols = line.split("\t")
-            row_type = determine_row_type(cols)
+            row_type = determine_row_type(cols, column_dict)
 
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 print "Extracting cycle #",str(cycle_id)
-                capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity'])]
-                capacity_discharge = cols[colnum(column_dict[row_type]['Cycle discharge capacity'])]
+                capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
+                capacity_discharge = cols[colnum(column_dict[row_type]['Cycle discharge capacity [mAh]'])]
                 if mass_g:
                     specific_capacity_charge = float(capacity_charge)/(mass_g)
                     specific_capacity_discharge = float(capacity_discharge)/(mass_g)

@@ -18,9 +18,9 @@ or::
 TODO
 ----
 
-- Infer ``.csv`` data columns based on headers.
-- Add an optional "mass?" prompt.
-- Put the number of the cycle at the beginning of the filename.
+- Generate a dedicated Grace output file.
+- Use existing mass if datafile contains it (e.g. "This datafile uses an active material mass of 1.3 mg. Continue using this value?")
+- Put the number of the cycle at the beginning of the filename to make it easier to sort.
 - Generate an EZStat-style ``.csv`` file.
 
 ----
@@ -30,3 +30,5 @@ DONE
 - Reference by spreadsheet column name, not column number (e.g. 'A', not 0, and 'Q', not 16).
 - Add a prompt so that it can be run successfully without arguments.
 - Output directory containing files for individual cycles.
+- Add an optional "mass?" prompt.
+- Infer ``.csv`` data columns based on headers.
