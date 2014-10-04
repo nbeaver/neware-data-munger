@@ -203,7 +203,35 @@ def main():
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
 
+    # TODO: split this off into a separate function.
     with open(input_file_path) as general_report:
+        column_dict = infer_input_file_format(general_report.readline())
+        # Try to infer the mass.
+        # TODO: separate this out to make it less messy.
+        # TODO: restructure this to avoid the duplication of later code.
+        if mass_g == None:
+            if 'Specific capacity [mAh/g]' in column_dict['record'].keys():
+                for i, line in enumerate(general_report.readlines()):
+                    if i < 2:
+                        pass
+                    else:
+                        cols = line.split("\t")
+                        if determine_row_type(cols, column_dict) == 'record':
+                            mAh = float(cols[colnum(column_dict['record']['Capacity [mAh]'])])
+                            mAh_per_g = float(cols[colnum(column_dict['record']['Specific capacity [mAh/g]'])])
+                            if mAh_per_g == 0.0:
+                                pass
+                            else:
+                                print "mAh =",str(mAh)
+                                print "mAh/g =",str(mAh_per_g)
+                                candidate_mass_g = mAh / mAh_per_g
+                                break
+                            # We've found a record, so let's break out of the for loop.
+                assert candidate_mass_g > 0
+                print "Data assumes mass of ",str(1000*candidate_mass_g),"mg."
+                print "Using this mass for calculations."
+        # Return to first byte of the file.
+        general_report.seek(0)
         header_lines_to_skip = 3
         step_type = None
         output_delimiter = '\t'
@@ -218,12 +246,9 @@ def main():
         all_cycles = []
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
-                if i == 0:
-                    column_dict = infer_input_file_format(line)
                 continue # don't process header lines
             cols = line.split("\t")
             row_type = determine_row_type(cols, column_dict)
-
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 print "Extracting cycle #",str(cycle_id)

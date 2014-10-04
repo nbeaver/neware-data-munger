@@ -34,6 +34,7 @@ TODO
 - Capacity vs cycle number output file.
 - Put the number of the cycle at the beginning of the filename to make it easier to sort.
 - Output a file that is convenient for plotting with `Origin`_.
+- Plot derivative of charge and discharge curves to identify plateaus.
 - Process layered report output as well.
 - Generate an EZStat-style ``.csv`` file. (?)
 
