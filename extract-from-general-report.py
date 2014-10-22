@@ -240,9 +240,10 @@ def main():
         cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
         grace_output_file = open(full_basename + "_grace_ascii.dat", 'w')
         if mass_g:
-            cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh/g]"+output_delimiter+ "discharge capacity [mAh/g]\n")
+            #TODO: avoid this gross duplication of code.
+            cycle_summary_file.write(header_comment_character + "CycleID" + output_delimiter + "charge capacity [mAh/g]" + output_delimiter + "discharge capacity [mAh/g]\n")
         else:
-            cycle_summary_file.write(header_comment_character + "CycleID charge capacity [mAh]"+output_delimiter+ "discharge capacity [mAh]\n")
+            cycle_summary_file.write(header_comment_character + "CycleID" + output_delimiter + "charge capacity [mAh]" + output_delimiter + "discharge capacity [mAh]\n")
         all_cycles = []
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
