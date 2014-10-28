@@ -371,7 +371,33 @@ def write_grace_input_file(cycle_dict, filename):
     grace_input_file.close()
 
 def write_origin_input_file(cycle_dict, filename):
+    import csv
     origin_input_file = open(filename, 'w')
+    origin_csv = csv.writer(origin_input_file, delimiter=',')
+    columns = []
+    #TODO: figure out mAh/g thing.
+    for cycle_id in cycle_dict.keys():
+        #TODO: avoid code duplication
+        step_type = 'charge'
+        column = [step_type + '_' + str(cycle_id), 'mAh'] + cycle_dict[cycle_id][step_type]['mAh']
+        columns.append(column)
+
+        column = [step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V']
+        columns.append(column)
+
+        step_type = 'discharge'
+        try:
+            column = [step_type + '_' + str(cycle_id), 'mAh'] + cycle_dict[cycle_id][step_type]['mAh']
+            columns.append(column)
+
+            column = [step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V']
+            columns.append(column)
+        except KeyError:
+            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
+    # Now we need to turn the varying-length columns into rows so we can easily write them to a file.
+    # https://muffinresearch.co.uk/python-transposing-lists-with-map-and-zip/
+    rows = map(None, *columns)
+    origin_csv.writerows(rows)
     origin_input_file.close()
 
 #TODO: split this gigantic function into smaller pieces
