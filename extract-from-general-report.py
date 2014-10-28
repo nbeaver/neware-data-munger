@@ -4,6 +4,7 @@ import sys
 import os
 import string
 import argparse
+import collections # for ordered dictionaries
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
@@ -174,6 +175,65 @@ def determine_row_type(row, column_dict):
     elif is_record_row:
         return "record"
 
+def parse_general_report(input_file_path):
+    cycle_dict = collections.OrderedDict()
+    # example structure:
+    # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
+    with open(input_file_path) as general_report:
+        column_dict = infer_input_file_format(general_report.readline())
+        try:
+            column_dict['record']['Specific capacity [mAh/g]']
+            vars_to_get = ['V', 'mAh', 'mAh/g']
+        except KeyError:
+            vars_to_get = ['V', 'mAh']
+        header_lines_to_skip = 3
+        step_type = None
+        output_delimiter = '\t'
+        for i, line in enumerate(general_report):
+            if i < header_lines_to_skip:
+                continue # don't process header lines
+            cols = line.split("\t")
+            row_type = determine_row_type(cols, column_dict)
+            if row_type == "cycle":
+                cycle_id = cols[colnum(column_dict[row_type]['Cycle ID'])]
+                assert cycle_id not in cycle_dict.keys()
+                print "Extracting cycle #",cycle_id
+                cycle_dict[cycle_id] = {}
+                capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
+                cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
+                capacity_discharge = cols[colnum(column_dict[row_type]['Cycle discharge capacity [mAh]'])]
+                cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'] = capacity_discharge
+            elif row_type == "step":
+                step_type = cols[colnum(column_dict[row_type]['Step type'])].strip()
+                #print step_type
+                if step_type == "CC_Chg":
+                    cycle_dict[cycle_id]['charge'] = {}
+                    for var in vars_to_get:
+                        cycle_dict[cycle_id]['charge'][var] = []
+                elif step_type == "CC_DChg":
+                    cycle_dict[cycle_id]['discharge'] = {}
+                    for var in vars_to_get:
+                        cycle_dict[cycle_id]['discharge'][var] = []
+                elif step_type == "Rest":
+                    pass
+                else:
+                    raise ValueError, "Unrecognized step type:" + step_type
+            elif row_type == "record":
+                if step_type == "CC_Chg" or step_type == "CC_DChg":
+                    V = cols[colnum(column_dict[row_type]['Voltage [V]'])]
+                    assert V != ""
+                    cycle_dict[cycle_id]['discharge']['V'].append(V)
+                    mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
+                    assert mAh != ""
+                    cycle_dict[cycle_id]['discharge']['mAh'].append(mAh)
+                    #print V, mAh
+                elif step_type == "Rest":
+                    pass
+                else:
+                    raise ValueError, "Unrecognized step type:" + step_type
+    return cycle_dict
+
+
 #TODO: split this gigantic function into smaller pieces
 def main():
     if len(sys.argv) > 1:
@@ -239,6 +299,7 @@ def main():
         output_file_extension = '.dat'
         cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
         grace_output_file = open(full_basename + "_grace_ascii.dat", 'w')
+        origin_output_file = open(full_basename + "_origin_columnar.csv", 'w')
         if mass_g:
             #TODO: avoid this gross duplication of code.
             cycle_summary_file.write(header_comment_character + "CycleID" + output_delimiter + "charge capacity [mAh/g]" + output_delimiter + "discharge capacity [mAh/g]\n")
