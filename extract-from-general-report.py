@@ -143,7 +143,6 @@ def infer_input_file_format(input_file):
     elif header_line == header_1_BTSDA:
         return columns_BTSDA
     else:
-        print "Header line is:",header_line
         raise NotImplementedError, "Cannot recognize datafile type."
 
 def determine_row_type(row, column_dict):
@@ -186,6 +185,8 @@ def parse_general_report(input_file_path):
     cycle_dict = collections.OrderedDict()
     # example structure:
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
+
+    DEBUG = False
     with open(input_file_path) as general_report:
         column_dict = infer_input_file_format(general_report)
         assert 'Cycle discharge capacity [mAh]' in column_dict['cycle'].keys()
@@ -199,14 +200,14 @@ def parse_general_report(input_file_path):
         delimiter = '\t'
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
-                print line
                 continue # don't process header lines
             cols = line.split(delimiter)
             row_type = determine_row_type(cols, column_dict)
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
-                print "Parsing cycle #",cycle_id
+                if DEBUG:
+                    print "Parsing cycle #",cycle_id
                 cycle_dict[cycle_id] = {}
                 capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
                 cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
@@ -214,7 +215,6 @@ def parse_general_report(input_file_path):
                 cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'] = capacity_discharge
             elif row_type == "step":
                 step_type = cols[colnum(column_dict[row_type]['Step type'])].strip()
-                #print step_type
                 if step_type == "CC_Chg":
                     cycle_dict[cycle_id]['charge'] = {}
                     for var in vars_to_get:
@@ -258,8 +258,8 @@ def infer_mass(cycle_dict):
         # We can't take the first value, because it starts at 0.
         # The last value gets the best precision.
         length = len(cycle_dict[1]['charge']['mAh/g'])
-        mAh_per_g = float(cycle_dict[1]['charge']['mAh/g'][length])
-        mAh = float(cycle_dict[1]['charge']['mAh'][length])
+        mAh_per_g = float(cycle_dict[1]['charge']['mAh/g'][length - 1])
+        mAh = float(cycle_dict[1]['charge']['mAh'][length - 1])
         if mAh_per_g == 0.0:
             return None
         candidate_mass_g = mAh / mAh_per_g
@@ -267,6 +267,31 @@ def infer_mass(cycle_dict):
         return candidate_mass_g
     else:
         return None
+
+def calculate_specific_capacities(cycle_dict, mass_g):
+    """ This takes the mass as a float and puts the specific capacities in as strings."""
+    assert mass_g > 0
+    if 'mAh/g' in cycle_dict[1]['charge'].keys():
+        print "Warning: overwriting exisitng specific capacities."
+    #TODO: may need to split this into cycle summary calculations and record calculations.
+    for cycle_id in cycle_dict.keys():
+
+        capacity_charge = float(cycle_dict[cycle_id]['Cycle charge capacity [mAh]'])
+        cycle_dict[cycle_id]['Cycle charge capacity [mAh/g]'] = str(capacity_charge / mass_g)
+
+        capacity_discharge = float(cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'])
+        cycle_dict[cycle_id]['Cycle discharge capacity [mAh/g]'] = str(capacity_discharge / mass_g)
+
+        cycle_dict[cycle_id]['charge']['mAh/g'] = []
+        for mAh in cycle_dict[cycle_id]['charge']['mAh']:
+            cycle_dict[cycle_id]['charge']['mAh/g'].append(str(float(mAh)/mass_g))
+
+        try:
+            cycle_dict[cycle_id]['discharge']['mAh/g'] = []
+            for mAh in cycle_dict[cycle_id]['discharge']['mAh']:
+                cycle_dict[cycle_id]['discharge']['mAh/g'].append(str(float(mAh)/mass_g))
+        except KeyError:
+            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
 
 def write_cycle_summary_file(cycle_dict, mass_g, filename):
     cycle_summary_file = open(filename, 'w')
@@ -309,12 +334,19 @@ def write_grace_input_file(cycle_dict, filename):
     delimiter = ' '
     record_separator = '\n'
     for cycle_id in cycle_dict.keys():
-        for mAh, V in zip(cycle_dict[cycle_id]['charge']['mAh'], cycle_dict[cycle_id]['charge']['V']):
-            grace_input_file.write(mAh + delimiter + V + "\n")
-        grace_input_file.write(record_separator)
-        for mAh, V in zip(cycle_dict[cycle_id]['discharge']['mAh'], cycle_dict[cycle_id]['discharge']['V']):
-            grace_input_file.write(mAh + delimiter + V + "\n")
-        grace_input_file.write(record_separator)
+        def write_step(x_list, y_list, step_type):
+            for x, y in zip(x_list, y_list):
+                grace_input_file.write(x + delimiter + y + "\n")
+            grace_input_file.write(record_separator)
+
+        step_type = 'charge'
+        write_step(cycle_dict[cycle_id][step_type]['mAh'], cycle_dict[cycle_id][step_type]['V'], step_type)
+        step_type = 'discharge'
+        try:
+            write_step(cycle_dict[cycle_id][step_type]['mAh'], cycle_dict[cycle_id][step_type]['V'], step_type)
+        except KeyError:
+            print "Warning: no discharge for cycle #",cycle_id
+
     grace_input_file.close()
 
 def write_origin_input_file(cycle_dict, filename):
@@ -323,6 +355,7 @@ def write_origin_input_file(cycle_dict, filename):
 
 #TODO: split this gigantic function into smaller pieces
 def main():
+    require_mass_calculations = None
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
         parser.add_argument('-m', '--mass', help='Plot title',required=False)
@@ -332,9 +365,11 @@ def main():
         cycle_dict = parse_general_report(input_file_path)
         if args.mass:
             # TODO: warn if this mass conflicts with inferred mass.
+            require_mass_calculations = True
             mass_g = float(args.mass)/1000.0
         else:
             mass_g = infer_mass(cycle_dict)
+            require_mass_calculations = False
     else:
         # DONE: see if we can infer the mass from the data.
         input_file_path = raw_input("Enter filename:")
@@ -343,14 +378,19 @@ def main():
         if mass_g == None:
             mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
             if mass_input != "":
+                #TODO: test for 0 mass and ask for new input.
                 mass_g = float(mass_input)/1000.0
+                require_mass_calculations = True
             else:
                 mass_g = None
+                require_mass_calculations = False
         else:
             print "Mass is inferred to be ",mass_g*1000,' mg.'
             #TODO: prompt to ask the user if this is ok.
 
     #TODO: calculate mAh/g from mass_g and add it to the cycle_dict.
+    if require_mass_calculations:
+        calculate_specific_capacities(cycle_dict, mass_g)
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
@@ -360,27 +400,30 @@ def main():
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
 
-    output_file_extension = '.dat'
-    write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary"+output_file_extension)
+    write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
 
     for cycle_id in cycle_dict.keys():
         if mass_g == None:
-            write_individual_cycle_file(cycle_dict[cycle_id]['charge']['mAh'], 'mAh', \
-                                        cycle_dict[cycle_id]['charge']['V'], 'V', \
-                                        full_basename + "_charge" + str(cycle_id) + output_file_extension)
-            write_individual_cycle_file(cycle_dict[cycle_id]['discharge']['mAh'], 'mAh', \
-                                        cycle_dict[cycle_id]['discharge']['V'], 'V', \
-                                        full_basename + "_discharge" + str(cycle_id) + output_file_extension)
+            capacity_type = 'mAh'
         else:
-            write_individual_cycle_file(cycle_dict[cycle_id]['charge']['mAh/g'], 'mAh/g', \
-                                        cycle_dict[cycle_id]['charge']['V'], 'V', \
-                                        full_basename + "_charge" + str(cycle_id) + output_file_extension)
-            write_individual_cycle_file(cycle_dict[cycle_id]['discharge']['mAh/g'], 'mAh/g', \
-                                        cycle_dict[cycle_id]['discharge']['V'], 'V', \
-                                        full_basename + "_discharge" + str(cycle_id) + output_file_extension)
+            capacity_type = 'mAh/g'
+
+        def write_cycle(cycle, step_type):
+            write_individual_cycle_file(cycle[capacity_type], capacity_type, \
+                                        cycle['V'], 'V', \
+                                        full_basename + "_" + step_type + str(cycle_id) + ".dat")
+
+        this_cycle = cycle_dict[cycle_id]['charge']
+        write_cycle(this_cycle, 'charge')
+
+        try:
+            this_cycle = cycle_dict[cycle_id]['discharge']
+            write_cycle(this_cycle, 'discharge')
+        except KeyError:
+            print "Warning: no discharge for cycle #",str(cycle_id),"."
 
     write_grace_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
-    write_origin_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
+    write_origin_input_file(cycle_dict, full_basename + "_origin_columnar.csv")
 
 if __name__ == "__main__":
     main()
