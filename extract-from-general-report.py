@@ -275,23 +275,16 @@ def calculate_specific_capacities(cycle_dict, mass_g):
         print "Warning: overwriting exisitng specific capacities."
     #TODO: may need to split this into cycle summary calculations and record calculations.
     for cycle_id in cycle_dict.keys():
+        for step_type in ['charge', 'discharge']:
+            capacity = float(cycle_dict[cycle_id]['Cycle '+step_type+' capacity [mAh]'])
+            cycle_dict[cycle_id]['Cycle '+step_type+' capacity [mAh/g]'] = str(capacity / mass_g)
 
-        capacity_charge = float(cycle_dict[cycle_id]['Cycle charge capacity [mAh]'])
-        cycle_dict[cycle_id]['Cycle charge capacity [mAh/g]'] = str(capacity_charge / mass_g)
-
-        capacity_discharge = float(cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'])
-        cycle_dict[cycle_id]['Cycle discharge capacity [mAh/g]'] = str(capacity_discharge / mass_g)
-
-        cycle_dict[cycle_id]['charge']['mAh/g'] = []
-        for mAh in cycle_dict[cycle_id]['charge']['mAh']:
-            cycle_dict[cycle_id]['charge']['mAh/g'].append(str(float(mAh)/mass_g))
-
-        try:
-            cycle_dict[cycle_id]['discharge']['mAh/g'] = []
-            for mAh in cycle_dict[cycle_id]['discharge']['mAh']:
-                cycle_dict[cycle_id]['discharge']['mAh/g'].append(str(float(mAh)/mass_g))
-        except KeyError:
-            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
+            try:
+                cycle_dict[cycle_id][step_type]['mAh/g'] = []
+                for mAh in cycle_dict[cycle_id][step_type]['mAh']:
+                    cycle_dict[cycle_id][step_type]['mAh/g'].append(str(float(mAh)/mass_g))
+            except KeyError:
+                print "Warning: no "+step_type+" for cycle #"+str(cycle_id)+"."
 
 def write_cycle_summary_file(cycle_dict, mass_g, filename):
     cycle_summary_file = open(filename, 'w')
@@ -385,7 +378,6 @@ def write_origin_input_file(cycle_dict, capacity_type, filename):
     origin_csv.writerows(rows)
     origin_input_file.close()
 
-#TODO: split this gigantic function into smaller pieces
 def main():
     require_mass_calculations = None
     if len(sys.argv) > 1:
