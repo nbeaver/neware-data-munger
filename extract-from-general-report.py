@@ -329,6 +329,27 @@ def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
         outfile.write(x + delimiter + y + "\n")
     outfile.close()
 
+def write_individual_cycle_files(cycle_dict, mass_g, full_basename):
+    for cycle_id in cycle_dict.keys():
+        if mass_g == None:
+            capacity_type = 'mAh'
+        else:
+            capacity_type = 'mAh/g'
+
+        def write_cycle(cycle, step_type):
+            write_individual_cycle_file(cycle[capacity_type], capacity_type, \
+                                        cycle['V'], 'V', \
+                                        full_basename + "_" + step_type + str(cycle_id) + ".dat")
+
+        this_cycle = cycle_dict[cycle_id]['charge']
+        write_cycle(this_cycle, 'charge')
+
+        try:
+            this_cycle = cycle_dict[cycle_id]['discharge']
+            write_cycle(this_cycle, 'discharge')
+        except KeyError:
+            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
+
 def write_grace_input_file(cycle_dict, filename):
     grace_input_file = open(filename, 'w')
     delimiter = ' '
@@ -345,7 +366,7 @@ def write_grace_input_file(cycle_dict, filename):
         try:
             write_step(cycle_dict[cycle_id][step_type]['mAh'], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
-            print "Warning: no discharge for cycle #",cycle_id
+            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
 
     grace_input_file.close()
 
@@ -401,27 +422,7 @@ def main():
     full_basename = os.path.join(folder_name, basename_no_extension)
 
     write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
-
-    for cycle_id in cycle_dict.keys():
-        if mass_g == None:
-            capacity_type = 'mAh'
-        else:
-            capacity_type = 'mAh/g'
-
-        def write_cycle(cycle, step_type):
-            write_individual_cycle_file(cycle[capacity_type], capacity_type, \
-                                        cycle['V'], 'V', \
-                                        full_basename + "_" + step_type + str(cycle_id) + ".dat")
-
-        this_cycle = cycle_dict[cycle_id]['charge']
-        write_cycle(this_cycle, 'charge')
-
-        try:
-            this_cycle = cycle_dict[cycle_id]['discharge']
-            write_cycle(this_cycle, 'discharge')
-        except KeyError:
-            print "Warning: no discharge for cycle #",str(cycle_id),"."
-
+    write_individual_cycle_files(cycle_dict, mass_g, full_basename)
     write_grace_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
     write_origin_input_file(cycle_dict, full_basename + "_origin_columnar.csv")
 
