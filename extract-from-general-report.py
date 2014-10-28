@@ -127,7 +127,10 @@ def colletter(column_number):
 
 assert colletter(len(string.uppercase)) == 'AA'
 
-def infer_input_file_format(header_line):
+def infer_input_file_format(input_file):
+    header_line = input_file.readline()
+    # Go back to the beginning of the file so we don't mess up code outside this function.
+    input_file.seek(0)
     header_line = header_line.strip()
     #header_1_BtsControl_xlsx = "Cycle ID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Specific Capacity-Chg(mAh/g)  	Specific Capacity-Dchg(mAh/g)  	Chg/DChg Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(mF)  	Capacitance_DChg(mF)  	IR(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(oC)"
     header_1_BtsControl_xlsx = "Cycle ID	Cap_Chg(mAh)	Cap_DChg(mAh)	Specific Capacity-Chg(mAh/g)	Specific Capacity-Dchg(mAh/g)	Chg/DChg Efficiency(%)	Engy_Chg(mWh)	Engy_DChg(mWh)	REngy_Chg(mWh/g)	REngy_Dchg(mWh/g)	CC_Chg_Ratio(%)	CC_Chg_Cap(mAh)	Plat_Cap(mAh)	Plat_Capacity Density(mAh)	Plat_Efficiency(%)	Plat_Time(h:min:s.ms)	Capacitance_Chg(mF)	Capacitance_DChg(mF)	IR(mΩ)	Mid_value Voltage(V)	Discharge Fading Ratio(%)	Charge Time(h:min:s.ms)	Discharge Time(h:min:s.ms)	Charge IR(mΩ)	Discharge IR(mΩ)	End Temperature(oC)"
@@ -147,6 +150,10 @@ def determine_row_type(row, column_dict):
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
+    DEBUG = False
+    if DEBUG:
+        print row
+        print "Looking at column ",column_dict['cycle']['Cycle ID']," which is '",row[colnum(column_dict['cycle']['Cycle ID'])],"'"
     if row[colnum(column_dict['cycle']['Cycle ID'])] != "":
         is_cycle_row = True
         is_step_row = False
@@ -180,9 +187,8 @@ def parse_general_report(input_file_path):
     # example structure:
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
     with open(input_file_path) as general_report:
-        column_dict = infer_input_file_format(general_report.readline())
-        print column_dict
-        assert 'Cycle discharge capacity [mAh]' in column_dict['record'].keys()
+        column_dict = infer_input_file_format(general_report)
+        assert 'Cycle discharge capacity [mAh]' in column_dict['cycle'].keys()
         assert 'Voltage [V]' in column_dict['record'].keys()
         if 'Specific capacity [mAh/g]' in column_dict['record'].keys():
             vars_to_get = ['V', 'mAh', 'mAh/g']
@@ -193,13 +199,14 @@ def parse_general_report(input_file_path):
         delimiter = '\t'
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
+                print line
                 continue # don't process header lines
-            cols = line.split("\t")
+            cols = line.split(delimiter)
             row_type = determine_row_type(cols, column_dict)
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
-                #print "Extracting cycle #",cycle_id
+                print "Parsing cycle #",cycle_id
                 cycle_dict[cycle_id] = {}
                 capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
                 cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
@@ -221,16 +228,23 @@ def parse_general_report(input_file_path):
                 else:
                     raise ValueError, "Unrecognized step type:" + step_type
             elif row_type == "record":
-                if step_type == "CC_Chg" or step_type == "CC_DChg":
-                    V = cols[colnum(column_dict[row_type]['Voltage [V]'])]
-                    assert V != ""
+                V = cols[colnum(column_dict[row_type]['Voltage [V]'])]
+                assert V != ""
+                mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
+                assert mAh != ""
+                if 'mAh/g' in vars_to_get:
+                    mAh_per_g = cols[colnum(column_dict['record']['Specific capacity [mAh/g]'])]
+                    assert mAh_per_g != ""
+                if step_type == "CC_Chg" :
+                    cycle_dict[cycle_id]['charge']['V'].append(V)
+                    cycle_dict[cycle_id]['charge']['mAh'].append(mAh)
+                    if 'mAh/g' in vars_to_get:
+                        cycle_dict[cycle_id]['charge']['mAh/g'].append(mAh_per_g)
+                elif step_type == "CC_DChg":
                     cycle_dict[cycle_id]['discharge']['V'].append(V)
-                    mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
-                    assert mAh != ""
                     cycle_dict[cycle_id]['discharge']['mAh'].append(mAh)
                     if 'mAh/g' in vars_to_get:
-                        mAh_per_g = cols[colnum(column_dict['record']['Specific capacity [mAh/g]'])]
-                    #print V, mAh
+                        cycle_dict[cycle_id]['discharge']['mAh/g'].append(mAh_per_g)
                 elif step_type == "Rest":
                     pass
                 else:
@@ -255,10 +269,9 @@ def infer_mass(cycle_dict):
         return None
 
 def write_cycle_summary_file(cycle_dict, mass_g, filename):
+    cycle_summary_file = open(filename, 'w')
     header_comment_character = '#'
-    output_file_extension = '.dat'
     delimiter = '\t'
-    cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
     if mass_g:
         capacity_type = "[mAh/g]"
     else:
@@ -282,9 +295,8 @@ def write_cycle_summary_file(cycle_dict, mass_g, filename):
 
 def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
     header_comment_character = '#'
-    output_file_extension = '.dat'
     delimiter = '\t'
-    outfile = open(filename)
+    outfile = open(filename, 'w')
     outfile.write(header_comment_character + x_name + delimiter + y_name + "\n")
     for x, y in zip(x_list, y_list):
         assert x != ""
@@ -293,20 +305,20 @@ def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
     outfile.close()
 
 def write_grace_input_file(cycle_dict, filename):
-    grace_input_file = open(full_basename + "_grace_ascii.dat", 'w')
+    grace_input_file = open(filename, 'w')
     delimiter = ' '
     record_separator = '\n'
     for cycle_id in cycle_dict.keys():
         for mAh, V in zip(cycle_dict[cycle_id]['charge']['mAh'], cycle_dict[cycle_id]['charge']['V']):
-            grace_output_file.write(mAh + delimiter + V + "\n")
-        grace_output_file.write(record_separator)
+            grace_input_file.write(mAh + delimiter + V + "\n")
+        grace_input_file.write(record_separator)
         for mAh, V in zip(cycle_dict[cycle_id]['discharge']['mAh'], cycle_dict[cycle_id]['discharge']['V']):
-            grace_output_file.write(mAh + delimiter + V + "\n")
-        grace_output_file.write(record_separator)
+            grace_input_file.write(mAh + delimiter + V + "\n")
+        grace_input_file.write(record_separator)
     grace_input_file.close()
 
 def write_origin_input_file(cycle_dict, filename):
-    origin_input_file = open(full_basename + "_origin_columnar.csv", 'w')
+    origin_input_file = open(filename, 'w')
     origin_input_file.close()
 
 #TODO: split this gigantic function into smaller pieces
@@ -319,6 +331,7 @@ def main():
         input_file_path = args.input
         cycle_dict = parse_general_report(input_file_path)
         if args.mass:
+            # TODO: warn if this mass conflicts with inferred mass.
             mass_g = float(args.mass)/1000.0
         else:
             mass_g = infer_mass(cycle_dict)
@@ -347,6 +360,7 @@ def main():
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
 
+    output_file_extension = '.dat'
     write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary"+output_file_extension)
 
     for cycle_id in cycle_dict.keys():
