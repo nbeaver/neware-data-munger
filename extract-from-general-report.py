@@ -5,6 +5,7 @@ import os
 import string
 import argparse
 import collections # for ordered dictionaries
+import distutils.util # for strtobool
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
@@ -272,7 +273,7 @@ def calculate_specific_capacities(cycle_dict, mass_g):
     """ This takes the mass as a float and puts the specific capacities in as strings."""
     assert mass_g > 0
     if 'mAh/g' in cycle_dict[1]['charge'].keys():
-        print "Warning: overwriting exisitng specific capacities."
+        print "Warning: overwriting existing specific capacities."
     #TODO: may need to split this into cycle summary calculations and record calculations.
     for cycle_id in cycle_dict.keys():
         for step_type in ['charge', 'discharge']:
@@ -378,41 +379,76 @@ def write_origin_input_file(cycle_dict, capacity_type, filename):
     origin_csv.writerows(rows)
     origin_input_file.close()
 
+def mass_from_user():
+    def mass_mg_from_user():
+        mass_mg = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh: ")
+        if mass_mg == "":
+            return None
+        elif float(mass_mg) == 0:
+            print("Error: mass cannot be 0.")
+            mass_mg_from_user()
+        elif float(mass_mg) < 0:
+            print("Error: mass cannot be negative.")
+            mass_mg_from_user()
+        else:
+            return float(mass_mg)
+
+    mass_mg = mass_mg_from_user()
+    if mass_mg:
+        mass_g = mass_mg / 1000.0
+        require_mass_calculations = True
+    else:
+        mass_g = None
+        require_mass_calculations = False
+    return mass_g, require_mass_calculations
+
 def main():
     require_mass_calculations = None
     if len(sys.argv) > 1:
+        # Parse arguments and run non-interactively.
         parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
         parser.add_argument('-m', '--mass', help='Plot title',required=False)
         parser.add_argument('-i', '--input', help='Input file',required=True)
         args = parser.parse_args()
         input_file_path = args.input
         cycle_dict = parse_general_report(input_file_path)
+        mass_g = infer_mass(cycle_dict)
         if args.mass:
-            # TODO: warn if this mass conflicts with inferred mass.
+            if mass_g:
+                print "Warning: mass inferred from file is",str(1000.0*mass_g),"mg but this is overriden by required value of",args.mass,"mg."
             require_mass_calculations = True
             mass_g = float(args.mass)/1000.0
         else:
             mass_g = infer_mass(cycle_dict)
             require_mass_calculations = False
     else:
-        # DONE: see if we can infer the mass from the data.
-        input_file_path = raw_input("Enter filename:")
-        cycle_dict = parse_general_report(input_file_path)
+        # Take interactive user input.
+        while True:
+            input_file_path = raw_input("Enter filename:")
+            #TODO: make this more robust againt mistyped filenames.
+            try:
+                cycle_dict = parse_general_report(input_file_path)
+                break
+            except IOError:
+                print "No such file or directory:", input_file_path
+
         mass_g = infer_mass(cycle_dict)
         if mass_g == None:
-            mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
-            if mass_input != "":
-                #TODO: test for 0 mass and ask for new input.
-                mass_g = float(mass_input)/1000.0
-                require_mass_calculations = True
-            else:
-                mass_g = None
-                require_mass_calculations = False
+            mass_g, require_mass_calculations = mass_mg_from_user()
         else:
-            print "Mass is inferred to be ",mass_g*1000,' mg.'
-            #TODO: prompt to ask the user if this is ok.
+            print "Mass is inferred to be",mass_g*1000,'mg.'
+            while True:
+                yes_or_no = raw_input("Use this value for mass? ")
+                try:
+                    if distutils.util.strtobool(yes_or_no):
+                        require_mass_calculations = False
+                        break
+                    else:
+                        mass_g, require_mass_calculations = mass_from_user()
+                        break
+                except ValueError:
+                    print "Please enter yes or no."
 
-    #TODO: calculate mAh/g from mass_g and add it to the cycle_dict.
     if require_mass_calculations:
         calculate_specific_capacities(cycle_dict, mass_g)
         capacity_type = 'mAh/g'
@@ -422,7 +458,7 @@ def main():
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
     folder_name = input_file_path_no_extension + "_data_extracted"
-    print "Saving to folder",folder_name
+    print "Saving to folder '"+folder_name+"'"
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
