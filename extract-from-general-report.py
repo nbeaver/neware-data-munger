@@ -329,12 +329,8 @@ def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
         outfile.write(x + delimiter + y + "\n")
     outfile.close()
 
-def write_individual_cycle_files(cycle_dict, mass_g, full_basename):
+def write_individual_cycle_files(cycle_dict, capacity_type, full_basename):
     for cycle_id in cycle_dict.keys():
-        if mass_g == None:
-            capacity_type = 'mAh'
-        else:
-            capacity_type = 'mAh/g'
 
         def write_cycle(cycle, step_type):
             write_individual_cycle_file(cycle[capacity_type], capacity_type, \
@@ -350,7 +346,7 @@ def write_individual_cycle_files(cycle_dict, mass_g, full_basename):
         except KeyError:
             print "Warning: no discharge for cycle #"+str(cycle_id)+"."
 
-def write_grace_input_file(cycle_dict, filename):
+def write_grace_input_file(cycle_dict, capacity_type, filename):
     grace_input_file = open(filename, 'w')
     delimiter = ' '
     record_separator = '\n'
@@ -361,39 +357,28 @@ def write_grace_input_file(cycle_dict, filename):
             grace_input_file.write(record_separator)
 
         step_type = 'charge'
-        write_step(cycle_dict[cycle_id][step_type]['mAh'], cycle_dict[cycle_id][step_type]['V'], step_type)
+        write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         step_type = 'discharge'
         try:
-            write_step(cycle_dict[cycle_id][step_type]['mAh'], cycle_dict[cycle_id][step_type]['V'], step_type)
+            write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
             print "Warning: no discharge for cycle #"+str(cycle_id)+"."
 
     grace_input_file.close()
 
-def write_origin_input_file(cycle_dict, filename):
+def write_origin_input_file(cycle_dict, capacity_type, filename):
     import csv
     origin_input_file = open(filename, 'w')
     origin_csv = csv.writer(origin_input_file, delimiter=',')
     columns = []
-    #TODO: figure out mAh/g thing.
     for cycle_id in cycle_dict.keys():
-        #TODO: avoid code duplication
-        step_type = 'charge'
-        column = [step_type + '_' + str(cycle_id), 'mAh'] + cycle_dict[cycle_id][step_type]['mAh']
-        columns.append(column)
-
-        column = [step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V']
-        columns.append(column)
-
-        step_type = 'discharge'
-        try:
-            column = [step_type + '_' + str(cycle_id), 'mAh'] + cycle_dict[cycle_id][step_type]['mAh']
-            columns.append(column)
-
-            column = [step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V']
-            columns.append(column)
-        except KeyError:
-            print "Warning: no discharge for cycle #"+str(cycle_id)+"."
+        for step_type in ['charge', 'discharge']:
+            try:
+                columns.append([step_type + '_' + str(cycle_id), capacity_type] + cycle_dict[cycle_id][step_type][capacity_type])
+                columns.append([step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V'])
+            except KeyError:
+                #TODO: use warnings module to make these actual warnings.
+                print "Warning: no "+step_type+" for cycle #"+str(cycle_id)+"."
     # Now we need to turn the varying-length columns into rows so we can easily write them to a file.
     # https://muffinresearch.co.uk/python-transposing-lists-with-map-and-zip/
     rows = map(None, *columns)
@@ -438,6 +423,9 @@ def main():
     #TODO: calculate mAh/g from mass_g and add it to the cycle_dict.
     if require_mass_calculations:
         calculate_specific_capacities(cycle_dict, mass_g)
+        capacity_type = 'mAh/g'
+    else:
+        capacity_type = 'mAh'
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
@@ -448,9 +436,9 @@ def main():
     full_basename = os.path.join(folder_name, basename_no_extension)
 
     write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
-    write_individual_cycle_files(cycle_dict, mass_g, full_basename)
-    write_grace_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
-    write_origin_input_file(cycle_dict, full_basename + "_origin_columnar.csv")
+    write_individual_cycle_files(cycle_dict, capacity_type, full_basename)
+    write_grace_input_file(cycle_dict, capacity_type, full_basename + "_grace_ascii.dat")
+    write_origin_input_file(cycle_dict, capacity_type, full_basename + "_origin_columnar.csv")
 
 if __name__ == "__main__":
     main()
