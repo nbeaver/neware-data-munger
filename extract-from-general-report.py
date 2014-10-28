@@ -181,6 +181,7 @@ def parse_general_report(input_file_path):
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
     with open(input_file_path) as general_report:
         column_dict = infer_input_file_format(general_report.readline())
+        print column_dict
         assert 'Cycle discharge capacity [mAh]' in column_dict['record'].keys()
         assert 'Voltage [V]' in column_dict['record'].keys()
         if 'Specific capacity [mAh/g]' in column_dict['record'].keys():
@@ -189,7 +190,7 @@ def parse_general_report(input_file_path):
             vars_to_get = ['V', 'mAh']
         header_lines_to_skip = 3
         step_type = None
-        output_delimiter = '\t'
+        delimiter = '\t'
         for i, line in enumerate(general_report):
             if i < header_lines_to_skip:
                 continue # don't process header lines
@@ -256,15 +257,15 @@ def infer_mass(cycle_dict):
 def write_cycle_summary_file(cycle_dict, mass_g, filename):
     header_comment_character = '#'
     output_file_extension = '.dat'
-    output_delimiter = '\t'
+    delimiter = '\t'
     cycle_summary_file = open(full_basename + "_all_cycle_summary" + output_file_extension, 'w')
     if mass_g:
         capacity_type = "[mAh/g]"
     else:
         capacity_type = "[mAh]"
 
-    cycle_summary_file.write(header_comment_character + "CycleID"  + output_delimiter)
-    cycle_summary_file.write("charge capacity "    + capacity_type + output_delimiter)
+    cycle_summary_file.write(header_comment_character + "CycleID"  + delimiter)
+    cycle_summary_file.write("charge capacity "    + capacity_type + delimiter)
     cycle_summary_file.write("discharge capacity " + capacity_type + "\n")
 
     for cycle_id in cycle_dict.keys():
@@ -274,18 +275,39 @@ def write_cycle_summary_file(cycle_dict, mass_g, filename):
         else:
             capacity_charge = float(cycle_dict[cycle_id]['Cycle charge capacity [mAh]']) / mass_g
             capacity_discharge = float(cycle_dict[cycle_id]['Cycle discharge capacity [mAh]']) / mass_g
-        cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(capacity_charge), str(capacity_discharge)]) + "\n")
 
-def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename)
+        cycle_summary_file.write(delimiter.join([str(cycle_id), str(capacity_charge), str(capacity_discharge)]) + "\n")
+
+    cycle_summary_file.close()
+
+def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
     header_comment_character = '#'
     output_file_extension = '.dat'
-    output_delimiter = '\t'
+    delimiter = '\t'
     outfile = open(filename)
-    outfile.write(header_comment_character + x_name + output_delimiter + y_name + "\n")
+    outfile.write(header_comment_character + x_name + delimiter + y_name + "\n")
     for x, y in zip(x_list, y_list):
         assert x != ""
         assert y != ""
-        outfile.write(x + output_delimiter + y + "\n")
+        outfile.write(x + delimiter + y + "\n")
+    outfile.close()
+
+def write_grace_input_file(cycle_dict, filename):
+    grace_input_file = open(full_basename + "_grace_ascii.dat", 'w')
+    delimiter = ' '
+    record_separator = '\n'
+    for cycle_id in cycle_dict.keys():
+        for mAh, V in zip(cycle_dict[cycle_id]['charge']['mAh'], cycle_dict[cycle_id]['charge']['V']):
+            grace_output_file.write(mAh + delimiter + V + "\n")
+        grace_output_file.write(record_separator)
+        for mAh, V in zip(cycle_dict[cycle_id]['discharge']['mAh'], cycle_dict[cycle_id]['discharge']['V']):
+            grace_output_file.write(mAh + delimiter + V + "\n")
+        grace_output_file.write(record_separator)
+    grace_input_file.close()
+
+def write_origin_input_file(cycle_dict, filename):
+    origin_input_file = open(full_basename + "_origin_columnar.csv", 'w')
+    origin_input_file.close()
 
 #TODO: split this gigantic function into smaller pieces
 def main():
@@ -295,10 +317,11 @@ def main():
         parser.add_argument('-i', '--input', help='Input file',required=True)
         args = parser.parse_args()
         input_file_path = args.input
+        cycle_dict = parse_general_report(input_file_path)
         if args.mass:
             mass_g = float(args.mass)/1000.0
         else:
-            mass_g = None
+            mass_g = infer_mass(cycle_dict)
     else:
         # DONE: see if we can infer the mass from the data.
         input_file_path = raw_input("Enter filename:")
@@ -313,6 +336,8 @@ def main():
         else:
             print "Mass is inferred to be ",mass_g*1000,' mg.'
             #TODO: prompt to ask the user if this is ok.
+
+    #TODO: calculate mAh/g from mass_g and add it to the cycle_dict.
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
@@ -329,45 +354,19 @@ def main():
             write_individual_cycle_file(cycle_dict[cycle_id]['charge']['mAh'], 'mAh', \
                                         cycle_dict[cycle_id]['charge']['V'], 'V', \
                                         full_basename + "_charge" + str(cycle_id) + output_file_extension)
+            write_individual_cycle_file(cycle_dict[cycle_id]['discharge']['mAh'], 'mAh', \
+                                        cycle_dict[cycle_id]['discharge']['V'], 'V', \
+                                        full_basename + "_discharge" + str(cycle_id) + output_file_extension)
         else:
             write_individual_cycle_file(cycle_dict[cycle_id]['charge']['mAh/g'], 'mAh/g', \
                                         cycle_dict[cycle_id]['charge']['V'], 'V', \
                                         full_basename + "_charge" + str(cycle_id) + output_file_extension)
+            write_individual_cycle_file(cycle_dict[cycle_id]['discharge']['mAh/g'], 'mAh/g', \
+                                        cycle_dict[cycle_id]['discharge']['V'], 'V', \
+                                        full_basename + "_discharge" + str(cycle_id) + output_file_extension)
 
-    grace_output_file = open(full_basename + "_grace_ascii.dat", 'w')
-    origin_output_file = open(full_basename + "_origin_columnar.csv", 'w')
-        file_charge = open(full_basename + "_charge" + str(cycle_id) + output_file_extension, 'w')
-        file_discharge = open(full_basename + "_discharge" + str(cycle_id) + output_file_extension, 'w')
-        capacity_charge = cycle_dict[cycle_id]['Cycle charge capacity [mAh]']
-        capacity_discharge = cycle_dict[cycle_id]['Cycle discharge capacity [mAh]']
-        if mass_g == None:
-            cycle_summary_file.write(output_delimiter.join([str(cycle_id), capacity_charge, capacity_discharge]) + "\n")
-
-            file_charge.write(header_comment_character + "mAh/g" + output_delimiter + "V\n")
-            for mAh, V in zip(cycle_dict[cycle_id]['charge']['mAh'],cycle_dict[cycle_id]['charge']['V']):
-                assert V != ""
-                assert mAh != ""
-                file_charge.write(mAh + output_delimiter + V + "\n")
-                grace_output_file.write(mAh + " " + V + "\n")
-            grace_output_file.write("\n")
-
-            file_discharge.write(header_comment_character + "mAh/g" + output_delimiter + "V\n")
-            for mAh, V in zip(cycle_dict[cycle_id]['discharge']['mAh'], cycle_dict[cycle_id]['discharge']['V']):
-                assert V != ""
-                assert mAh != ""
-                file_charge.write(mAh + output_delimiter + V + "\n")
-                grace_output_file.write(mAh + " " + V + "\n")
-            grace_output_file.write("\n")
-        else:
-            specific_capacity_charge = float(capacity_charge)/(mass_g)
-            specific_capacity_discharge = float(capacity_discharge)/(mass_g)
-            cycle_summary_file.write(output_delimiter.join([str(cycle_id), str(specific_capacity_charge), str(specific_capacity_discharge)]) + "\n")
-            file_charge.write(mAh_per_g + output_delimiter + V + "\n")
-            file_discharge.write(mAh_per_g + output_delimiter + V + "\n")
-            grace_output_file.write(mAh_per_g + " " + V + "\n")
-
-    cycle_summary_file.close()
-    grace_output_file.close()
+    write_grace_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
+    write_origin_input_file(cycle_dict, full_basename + "_grace_ascii.dat")
 
 if __name__ == "__main__":
     main()
