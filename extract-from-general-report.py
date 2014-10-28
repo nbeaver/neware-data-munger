@@ -181,10 +181,11 @@ def parse_general_report(input_file_path):
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
     with open(input_file_path) as general_report:
         column_dict = infer_input_file_format(general_report.readline())
-        try:
-            column_dict['record']['Specific capacity [mAh/g]']
+        assert 'Cycle discharge capacity [mAh]' in column_dict['record'].keys()
+        assert 'Voltage [V]' in column_dict['record'].keys()
+        if 'Specific capacity [mAh/g]' in column_dict['record'].keys():
             vars_to_get = ['V', 'mAh', 'mAh/g']
-        except KeyError:
+        else:
             vars_to_get = ['V', 'mAh']
         header_lines_to_skip = 3
         step_type = None
@@ -195,7 +196,7 @@ def parse_general_report(input_file_path):
             cols = line.split("\t")
             row_type = determine_row_type(cols, column_dict)
             if row_type == "cycle":
-                cycle_id = cols[colnum(column_dict[row_type]['Cycle ID'])]
+                cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
                 print "Extracting cycle #",cycle_id
                 cycle_dict[cycle_id] = {}
@@ -226,6 +227,8 @@ def parse_general_report(input_file_path):
                     mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
                     assert mAh != ""
                     cycle_dict[cycle_id]['discharge']['mAh'].append(mAh)
+                    if 'mAh/g' in vars_to_get:
+                        mAh_per_g = cols[colnum(column_dict['record']['Specific capacity [mAh/g]'])]
                     #print V, mAh
                 elif step_type == "Rest":
                     pass
@@ -233,6 +236,22 @@ def parse_general_report(input_file_path):
                     raise ValueError, "Unrecognized step type:" + step_type
     return cycle_dict
 
+def infer_mass(cycle_dict):
+    # Look at the first charge cycle.
+    #TODO: is there a way to make this less arbitrary?
+    if 'mAh/g' in cycle_dict[1]['charge'].keys():
+        # We can't take the first value, because it starts at 0.
+        # The last value gets the best precision.
+        length = len(cycle_dict[1]['charge']['mAh/g'])
+        mAh_per_g = float(cycle_dict[1]['charge']['mAh/g'][length])
+        mAh = float(cycle_dict[1]['charge']['mAh'][length])
+        if mAh_per_g == 0.0:
+            return None
+        candidate_mass_g = mAh / mAh_per_g
+        assert candidate_mass_g > 0
+        return candidate_mass_g
+    else:
+        return None
 
 #TODO: split this gigantic function into smaller pieces
 def main():
@@ -247,13 +266,18 @@ def main():
         else:
             mass_g = None
     else:
-        # TODO: see if we can infer the mass from the data.
+        # DONE: see if we can infer the mass from the data.
         input_file_path = raw_input("Enter filename:")
-        mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
-        if mass_input != "":
-            mass_g = float(mass_input)/1000.0
+        cycle_dict = parse_general_report(input_file_path)
+        mass_g = infer_mass(cycle_dict)
+        if mass_g == None:
+            mass_input = raw_input("Enter mass of active material in mg, or just press enter to calculate mAh:")
+            if mass_input != "":
+                mass_g = float(mass_input)/1000.0
+            else:
+                mass_g = None
         else:
-            mass_g = None
+            print "Mass is inferred to be ",mass_g*1000,' mg.'
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
