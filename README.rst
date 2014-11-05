@@ -37,6 +37,7 @@ TODO
 - Plot derivative of charge and discharge curves to identify plateaus.
 - Process layered report output as well.
 - Generate an EZStat-style ``.csv`` file. (?)
+- Automate tests of interactive input using ``expect``.
 
 ----
 DONE
