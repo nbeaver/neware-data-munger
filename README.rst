@@ -30,19 +30,20 @@ Currently only works with the "General Report" export type.
 TODO
 ----
 
-- Use existing mass if datafile contains it (e.g. "This datafile uses an active material mass of 1.3 mg. Continue using this value?")
-- Capacity vs cycle number output file.
-- Put the number of the cycle at the beginning of the filename to make it easier to sort.
-- Output a file that is convenient for plotting with `Origin`_.
+- Automate tests of interactive input using ``expect``.
+- Make Origin recognize the ``.csv`` as an XYXYXY... file, not an XYYYY.. file.
 - Plot derivative of charge and discharge curves to identify plateaus.
 - Process layered report output as well.
+- Put the number of the cycle at the beginning of the filename to make it easier to sort.
 - Generate an EZStat-style ``.csv`` file. (?)
-- Automate tests of interactive input using ``expect``.
 
 ----
 DONE
 ----
 
+- Use existing mass if datafile contains it (e.g. "This datafile uses an active material mass of 1.3 mg. Continue using this value?")
+- Capacity vs cycle number output file.
+- Output a file that is convenient for plotting with `Origin`_.
 - Reference by spreadsheet column name, not column number (e.g. 'A', not 0, and 'Q', not 16).
 - Add a prompt so that it can be run successfully without arguments.
 - Output directory containing files for individual cycles.
