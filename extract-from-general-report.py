@@ -434,7 +434,7 @@ def main():
 
         mass_g = infer_mass(cycle_dict)
         if mass_g == None:
-            mass_g, require_mass_calculations = mass_mg_from_user()
+            mass_g, require_mass_calculations = mass_from_user()
         else:
             print "Mass is inferred to be",mass_g*1000,'mg.'
             while True:
