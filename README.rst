@@ -30,6 +30,7 @@ Currently only works with the "General Report" export type.
 TODO
 ----
 
+- Add ``gnuplot`` output file with embedded data for quick plotting.
 - Automate tests of interactive input using ``expect``.
 - Make Origin recognize the ``.csv`` as an XYXYXY... file, not an XYYYY.. file.
 - Plot derivative of charge and discharge curves to identify plateaus.
