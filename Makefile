@@ -1,4 +1,4 @@
-all: 
+all:
 	# Test interactive script first.
 	./interactive.exp
 	# Now test the non-interactive.
@@ -11,6 +11,4 @@ all:
 	./extract-from-general-report.py --input example-data/extracted-from-BtsControl/5days_cell2/5days_cell2_general_report_excel_export.csv
 	./extract-from-general-report.py --input example-data/extracted-from-BtsControl/MoO2_coin_cell_N1/MoO2_coin_cell_N1_general_report.csv --mass 6.56
 	./extract-from-general-report.py --input example-data/extracted-from-BtsControl/MoO2_coin_cell_N2/MoO2_coin_cell_N2_general_report.csv --mass 8.96
-
 	rst2html README.rst > README.html
-	
