@@ -256,19 +256,23 @@ def parse_general_report(input_file_path):
 def infer_mass(cycle_dict):
     # Look at the first charge cycle.
     #TODO: is there a way to make this less arbitrary?
-    if 'mAh/g' in cycle_dict[1]['charge'].keys():
-        # We can't take the first value, because it starts at 0.
-        # The last value gets the best precision.
-        length = len(cycle_dict[1]['charge']['mAh/g'])
-        mAh_per_g = float(cycle_dict[1]['charge']['mAh/g'][length - 1])
-        mAh = float(cycle_dict[1]['charge']['mAh'][length - 1])
-        if mAh_per_g == 0.0:
-            return None
-        candidate_mass_g = mAh / mAh_per_g
-        assert candidate_mass_g > 0
-        return candidate_mass_g
-    else:
-        return None
+    for i in range(0, len(cycle_dict)):
+        try:
+            if 'mAh/g' in cycle_dict[1]['charge'].keys():
+                # We can't take the first value, because it starts at 0.
+                # The last value gets the best precision.
+                length = len(cycle_dict[1]['charge']['mAh/g'])
+                mAh_per_g = float(cycle_dict[1]['charge']['mAh/g'][length - 1])
+                mAh = float(cycle_dict[1]['charge']['mAh'][length - 1])
+                if mAh_per_g == 0.0:
+                    return None
+                candidate_mass_g = mAh / mAh_per_g
+                assert candidate_mass_g > 0
+                return candidate_mass_g
+            else:
+                return None
+        except KeyError:
+            continue
 
 def calculate_specific_capacities(cycle_dict, mass_g):
     """ This takes the mass as a float and puts the specific capacities in as strings."""
@@ -332,8 +336,11 @@ def write_individual_cycle_files(cycle_dict, capacity_type, full_basename):
                                         cycle['V'], 'V', \
                                         full_basename + "_" + step_type + str(cycle_id) + ".dat")
 
-        this_cycle = cycle_dict[cycle_id]['charge']
-        write_cycle(this_cycle, 'charge')
+        try:
+            this_cycle = cycle_dict[cycle_id]['charge']
+            write_cycle(this_cycle, 'charge')
+        except KeyError:
+            print "Warning: no charge for cycle #"+str(cycle_id)+"."
 
         try:
             this_cycle = cycle_dict[cycle_id]['discharge']
@@ -352,7 +359,10 @@ def write_grace_input_file(cycle_dict, capacity_type, filename):
             grace_input_file.write(record_separator)
 
         step_type = 'charge'
-        write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
+        try:
+            write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
+        except KeyError:
+            print "Warning: no charge for cycle #"+str(cycle_id)+"."
         step_type = 'discharge'
         try:
             write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
