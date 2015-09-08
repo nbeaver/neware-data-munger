@@ -277,8 +277,11 @@ def infer_mass(cycle_dict):
 def calculate_specific_capacities(cycle_dict, mass_g):
     """ This takes the mass as a float and puts the specific capacities in as strings."""
     assert mass_g > 0
-    if 'mAh/g' in cycle_dict[1]['charge'].keys():
-        print "Warning: overwriting existing specific capacities."
+    try:
+        if 'mAh/g' in cycle_dict[1]['charge'].keys():
+            print "Warning: overwriting existing specific capacities."
+    except KeyError:
+        pass
     #TODO: may need to split this into cycle summary calculations and record calculations.
     for cycle_id in cycle_dict.keys():
         for step_type in ['charge', 'discharge']:
