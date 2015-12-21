@@ -169,7 +169,7 @@ def determine_row_type(row, column_dict):
             if row[colnum(column_dict['record']['Record ID'])] != "":
                 is_record_row = True
             else:
-                raise ValueError, "Cannot determine row type for this row:"+row
+                raise ValueError, "Cannot determine row type for this row:"+str(row)
     row_types = [is_cycle_row, is_step_row, is_record_row]
     # Check that we didn't miss a type of row.
     assert all(row_type is not None for row_type in row_types)
