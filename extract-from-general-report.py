@@ -6,6 +6,7 @@ import string
 import argparse
 import collections # for ordered dictionaries
 import distutils.util # for strtobool
+import ConfigParser
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
@@ -295,6 +296,15 @@ def calculate_specific_capacities(cycle_dict, mass_g):
             except KeyError:
                 print "Warning: no "+step_type+" for cycle #"+str(cycle_id)+"."
 
+def write_ini_file(data_path, cycle_dict, mass_g, filename):
+    config = ConfigParser.RawConfigParser()
+    config.add_section('DataInfo')
+    config.set('DataInfo', 'data_file', data_path)
+    config.set('DataInfo', 'mass_grams', str(mass_g))
+    config.set('DataInfo', 'cycles', str(len(cycle_dict)))
+    with open(filename, 'wb') as configfile:
+        config.write(configfile)
+
 def write_cycle_summary_file(cycle_dict, mass_g, filename):
     cycle_summary_file = open(filename, 'w')
     header_comment_character = '#'
@@ -477,6 +487,7 @@ def main():
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
 
+    write_ini_file(input_file_path, cycle_dict, mass_g, full_basename + "_data.ini")
     write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
     write_individual_cycle_files(cycle_dict, capacity_type, full_basename)
     write_grace_input_file(cycle_dict, capacity_type, full_basename + "_grace_ascii.dat")
