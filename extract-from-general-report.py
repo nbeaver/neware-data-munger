@@ -302,6 +302,8 @@ def write_ini_file(data_path, cycle_dict, mass_g, filename):
     config.set('DataInfo', 'data_file', data_path)
     config.set('DataInfo', 'mass_grams', str(mass_g))
     config.set('DataInfo', 'cycles', str(len(cycle_dict)))
+    # TODO: add field for date and time.
+    # TODO: add field for type of data file.
     with open(filename, 'wb') as configfile:
         config.write(configfile)
 
