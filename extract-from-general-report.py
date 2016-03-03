@@ -11,7 +11,6 @@ import ConfigParser
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
-DEBUG = False
 # mapping for BTSDA 7.4.1.824 general report (.txt)
 columns_BTSDA = {
     'headers': [
@@ -155,7 +154,7 @@ def infer_input_file_format(input_file):
     else:
         raise NotImplementedError, "Cannot recognize datafile type."
 
-def determine_row_type(row, column_dict):
+def determine_row_type(row, column_dict, DEBUG=False):
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
@@ -190,7 +189,7 @@ def determine_row_type(row, column_dict):
     elif is_record_row:
         return "record"
 
-def parse_general_report(input_file_path):
+def parse_general_report(input_file_path, DEBUG=False):
     cycle_dict = collections.OrderedDict()
     # example structure:
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
@@ -482,7 +481,7 @@ def mass_from_user():
         require_mass_calculations = False
     return mass_g, require_mass_calculations
 
-def main():
+def main(DEBUG=False):
     require_mass_calculations = None
     if len(sys.argv) > 1:
         # Parse arguments and run non-interactively.
