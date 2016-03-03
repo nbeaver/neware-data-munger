@@ -399,6 +399,44 @@ def write_grace_input_file(cycle_dict, capacity_type, path, filename_prefix):
 
     grace_input_file.close()
 
+def write_gnuplot_input_file(cycle_dict, capacity_type, path, filename_prefix):
+    filename = filename_prefix + "_plot.gnuplot"
+    filepath = os.path.join(path, filename)
+    gnuplot_input_file = open(filepath, 'w')
+    header = """
+    set xlabel "Capacity [{}]"
+    set ylabel "Potential vs. Li/Li+ [V]"
+    set title "{}"
+    set key off
+    set auto fix
+    set style data points
+    set yrange [0:*]
+    """.format(capacity_type, filename_prefix)
+    if os.name == 'nt':
+        header += "set terminal wxt persist\n"
+    else:
+        header += "set terminal x11 persist\n"
+    header += "plot '-' pointtype 0\n"
+    gnuplot_input_file.write(header)
+    for cycle_id in cycle_dict.keys():
+        def write_step(x_list, y_list, step_type):
+            for x, y in zip(x_list, y_list):
+                gnuplot_input_file.write(x + ' ' + y + "\n")
+
+        step_type = 'charge'
+        try:
+            write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
+        except KeyError:
+            sys.stderr.write("Warning: no charge for cycle #"+str(cycle_id)+"\n")
+        step_type = 'discharge'
+        try:
+            write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
+        except KeyError:
+            sys.stderr.write("Warning: no discharge for cycle #"+str(cycle_id)+"\n")
+
+    gnuplot_input_file.write("EOF\n")
+    gnuplot_input_file.close()
+
 def write_origin_input_file(cycle_dict, capacity_type, path, filename_prefix):
     filename = filename_prefix + "_origin_columnar.csv"
     filepath = os.path.join(path, filename)
@@ -509,6 +547,7 @@ def main():
     write_individual_cycle_files(cycle_dict, capacity_type, out_dir, basename_no_extension)
     write_grace_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
     write_origin_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
+    write_gnuplot_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
 
 if __name__ == "__main__":
     main()
