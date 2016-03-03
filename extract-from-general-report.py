@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- encoding:utf-8 -*-
+from __future__ import print_function
 import sys
 import os
 import string
@@ -159,8 +160,8 @@ def determine_row_type(row, column_dict):
     is_step_row = None
     is_record_row = None
     if DEBUG:
-        print row
-        print "Looking at column ",column_dict['cycle']['Cycle ID']," which is '",row[colnum(column_dict['cycle']['Cycle ID'])],"'"
+        print(row)
+        print("Looking at column {} which is {}".format(column_dict['cycle']['Cycle ID'], row[colnum(column_dict['cycle']['Cycle ID'])]))
     if row[colnum(column_dict['cycle']['Cycle ID'])] != "":
         is_cycle_row = True
         is_step_row = False
@@ -214,7 +215,7 @@ def parse_general_report(input_file_path):
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
                 if DEBUG:
-                    print "Parsing cycle #",cycle_id
+                    print("Parsing cycle #",cycle_id)
                 cycle_dict[cycle_id] = {}
                 capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
                 cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
@@ -509,13 +510,13 @@ def main():
                 cycle_dict = parse_general_report(input_file_path)
                 break
             except IOError:
-                print "No such file or directory:", input_file_path
+                sys.stderr.write("No such file or directory:", input_file_path)
 
         mass_g = infer_mass(cycle_dict)
         if mass_g == None:
             mass_g, require_mass_calculations = mass_from_user()
         else:
-            print "Mass is inferred to be",mass_g*1000,'mg.'
+            print("Mass is inferred to be {}mg".format(mass_g*1000))
             while True:
                 yes_or_no = raw_input("Use this value for mass? ")
                 try:
@@ -526,7 +527,7 @@ def main():
                         mass_g, require_mass_calculations = mass_from_user()
                         break
                 except ValueError:
-                    print "Please enter yes or no."
+                    print("Please enter yes or no.")
 
     if require_mass_calculations:
         calculate_specific_capacities(cycle_dict, mass_g)
@@ -538,7 +539,7 @@ def main():
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
     out_dir = input_file_path_no_extension + "_data_extracted"
     if DEBUG:
-        print "Saving to folder '"+out_dir+"'"
+        print("Saving to folder ",out_dir)
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 
