@@ -10,6 +10,7 @@ import ConfigParser
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
+DEBUG = False
 # mapping for BTSDA 7.4.1.824 general report (.txt)
 columns_BTSDA = {
     'headers': [
@@ -157,7 +158,6 @@ def determine_row_type(row, column_dict):
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
-    DEBUG = False
     if DEBUG:
         print row
         print "Looking at column ",column_dict['cycle']['Cycle ID']," which is '",row[colnum(column_dict['cycle']['Cycle ID'])],"'"
@@ -194,7 +194,6 @@ def parse_general_report(input_file_path):
     # example structure:
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
 
-    DEBUG = False
     with open(input_file_path) as general_report:
         column_dict = infer_input_file_format(general_report)
         assert 'Cycle discharge capacity [mAh]' in column_dict['cycle'].keys()
@@ -500,7 +499,8 @@ def main():
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
     out_dir = input_file_path_no_extension + "_data_extracted"
-    print "Saving to folder '"+out_dir+"'"
+    if DEBUG:
+        print "Saving to folder '"+out_dir+"'"
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 

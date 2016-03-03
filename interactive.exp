@@ -53,5 +53,3 @@ send -- "\r"
 expect -exact "\r
 Enter mass of active material in mg, or just press enter to calculate mAh: "
 send -- "4.3\r"
-expect -exact "\r
-Saving to folder 'example-data/extracted-from-BTSDA-2013-04-22/cell3_NMC_09_09_data_extracted'\r"
