@@ -488,11 +488,11 @@ def main():
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
-    folder_name = input_file_path_no_extension + "_data_extracted"
-    print "Saving to folder '"+folder_name+"'"
-    if not os.path.isdir(folder_name):
-        os.mkdir(folder_name)
-    full_basename = os.path.join(folder_name, basename_no_extension)
+    folder_path = input_file_path_no_extension + "_data_extracted"
+    print "Saving to folder '"+folder_path+"'"
+    if not os.path.isdir(folder_path):
+        os.mkdir(folder_path)
+    full_basename = os.path.join(folder_path, basename_no_extension)
 
     write_ini_file(input_file_path, cycle_dict, mass_g, full_basename + "_data.ini")
     write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
