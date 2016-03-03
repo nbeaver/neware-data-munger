@@ -490,7 +490,7 @@ def main():
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
     folder_name = input_file_path_no_extension + "_data_extracted"
     print "Saving to folder '"+folder_name+"'"
-    if not os.path.exists(folder_name):
+    if not os.path.isdir(folder_name):
         os.mkdir(folder_name)
     full_basename = os.path.join(folder_name, basename_no_extension)
 
