@@ -301,7 +301,9 @@ def calculate_specific_capacities(cycle_dict, mass_g):
             except KeyError:
                 print "Warning: no "+step_type+" for cycle #"+str(cycle_id)+"."
 
-def write_ini_file(data_path, cycle_dict, mass_g, filename):
+def write_ini_file(data_path, cycle_dict, mass_g, path, filename_prefix):
+    filename = filename_prefix + "_data.ini"
+    filepath = os.path.join(path, filename)
     config = ConfigParser.RawConfigParser()
     config.add_section('DataInfo')
     config.set('DataInfo', 'data_file', data_path)
@@ -309,11 +311,13 @@ def write_ini_file(data_path, cycle_dict, mass_g, filename):
     config.set('DataInfo', 'cycles', str(len(cycle_dict)))
     # TODO: add field for date and time.
     # TODO: add field for type of data file.
-    with open(filename, 'wb') as configfile:
+    with open(filepath, 'wb') as configfile:
         config.write(configfile)
 
-def write_cycle_summary_file(cycle_dict, mass_g, filename):
-    cycle_summary_file = open(filename, 'w')
+def write_cycle_summary_file(cycle_dict, mass_g, path, filename_prefix):
+    filename = filename_prefix + "_all_cycle_summary.dat"
+    filepath = os.path.join(path, filename)
+    cycle_summary_file = open(filepath, 'w')
     header_comment_character = '#'
     delimiter = '\t'
     if mass_g:
@@ -337,10 +341,10 @@ def write_cycle_summary_file(cycle_dict, mass_g, filename):
 
     cycle_summary_file.close()
 
-def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
+def write_individual_cycle_file(x_list, x_name, y_list, y_name, filepath):
     header_comment_character = '#'
     delimiter = '\t'
-    outfile = open(filename, 'w')
+    outfile = open(filepath, 'w')
     outfile.write(header_comment_character + x_name + delimiter + y_name + "\n")
     for x, y in zip(x_list, y_list):
         assert x != ""
@@ -348,13 +352,13 @@ def write_individual_cycle_file(x_list, x_name, y_list, y_name, filename):
         outfile.write(x + delimiter + y + "\n")
     outfile.close()
 
-def write_individual_cycle_files(cycle_dict, capacity_type, full_basename):
+def write_individual_cycle_files(cycle_dict, capacity_type, path, filename_prefix):
     for cycle_id in cycle_dict.keys():
 
         def write_cycle(cycle, step_type):
-            write_individual_cycle_file(cycle[capacity_type], capacity_type, \
-                                        cycle['V'], 'V', \
-                                        full_basename + "_" + step_type + str(cycle_id) + ".dat")
+            filename = filename_prefix + "_" + step_type + str(cycle_id) + ".dat"
+            filepath = os.path.join(path, filename)
+            write_individual_cycle_file(cycle[capacity_type], capacity_type, cycle['V'], 'V', filepath)
 
         try:
             this_cycle = cycle_dict[cycle_id]['charge']
@@ -368,8 +372,10 @@ def write_individual_cycle_files(cycle_dict, capacity_type, full_basename):
         except KeyError:
             print "Warning: no discharge for cycle #"+str(cycle_id)+"."
 
-def write_grace_input_file(cycle_dict, capacity_type, filename):
-    grace_input_file = open(filename, 'w')
+def write_grace_input_file(cycle_dict, capacity_type, path, filename_prefix):
+    filename = filename_prefix + "_grace_ascii.dat"
+    filepath = os.path.join(path, filename)
+    grace_input_file = open(filepath, 'w')
     delimiter = ' '
     record_separator = '\n'
     for cycle_id in cycle_dict.keys():
@@ -391,9 +397,11 @@ def write_grace_input_file(cycle_dict, capacity_type, filename):
 
     grace_input_file.close()
 
-def write_origin_input_file(cycle_dict, capacity_type, filename):
+def write_origin_input_file(cycle_dict, capacity_type, path, filename_prefix):
+    filename = filename_prefix + "_origin_columnar.csv"
+    filepath = os.path.join(path, filename)
     import csv
-    origin_input_file = open(filename, 'w')
+    origin_input_file = open(filepath, 'w')
     origin_csv = csv.writer(origin_input_file, delimiter=',')
     columns = []
     for cycle_id in cycle_dict.keys():
@@ -488,17 +496,16 @@ def main():
 
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
-    folder_path = input_file_path_no_extension + "_data_extracted"
-    print "Saving to folder '"+folder_path+"'"
-    if not os.path.isdir(folder_path):
-        os.mkdir(folder_path)
-    full_basename = os.path.join(folder_path, basename_no_extension)
+    out_dir = input_file_path_no_extension + "_data_extracted"
+    print "Saving to folder '"+out_dir+"'"
+    if not os.path.isdir(out_dir):
+        os.mkdir(out_dir)
 
-    write_ini_file(input_file_path, cycle_dict, mass_g, full_basename + "_data.ini")
-    write_cycle_summary_file(cycle_dict, mass_g, full_basename+"_all_cycle_summary.dat")
-    write_individual_cycle_files(cycle_dict, capacity_type, full_basename)
-    write_grace_input_file(cycle_dict, capacity_type, full_basename + "_grace_ascii.dat")
-    write_origin_input_file(cycle_dict, capacity_type, full_basename + "_origin_columnar.csv")
+    write_ini_file(input_file_path, cycle_dict, mass_g, out_dir, basename_no_extension)
+    write_cycle_summary_file(cycle_dict, mass_g, out_dir, basename_no_extension)
+    write_individual_cycle_files(cycle_dict, capacity_type, out_dir, basename_no_extension)
+    write_grace_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
+    write_origin_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
 
 if __name__ == "__main__":
     main()
