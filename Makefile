@@ -1,4 +1,4 @@
-all: scripted interactive README.html
+all: scripted interactive readme.html
 .PHONY : all scripted interactive
 
 scripted:
@@ -16,8 +16,8 @@ interactive:
 	# Use `expect` to test interactive version.
 	./interactive.exp
 
-README.html : README.rst
-	rst2html README.rst > README.html
+readme.html : readme.rst
+	rst2html readme.rst > readme.html
 
 clean:
 	rm -rf example-data/extracted-from-BTSDA-2013-04-22/5days_cell2_BTSDA_export_data_extracted/
