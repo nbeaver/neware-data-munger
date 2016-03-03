@@ -353,11 +353,14 @@ def write_individual_cycle_file(x_list, x_name, y_list, y_name, filepath):
     outfile.close()
 
 def write_individual_cycle_files(cycle_dict, capacity_type, path, filename_prefix):
+    subfolder = os.path.join(path, 'individual_cycles')
+    if not os.path.isdir(subfolder):
+        os.mkdir(subfolder)
     for cycle_id in cycle_dict.keys():
 
         def write_cycle(cycle, step_type):
             filename = filename_prefix + "_" + step_type + str(cycle_id) + ".dat"
-            filepath = os.path.join(path, filename)
+            filepath = os.path.join(subfolder, filename)
             write_individual_cycle_file(cycle[capacity_type], capacity_type, cycle['V'], 'V', filepath)
 
         try:
