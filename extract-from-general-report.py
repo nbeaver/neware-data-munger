@@ -156,6 +156,7 @@ def infer_input_file_format(input_file):
         raise NotImplementedError, "Cannot recognize datafile type."
 
 def determine_row_type(row, column_dict, DEBUG=False):
+    # TODO: use a better data structure, maybe an enum.
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
