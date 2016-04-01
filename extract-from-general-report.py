@@ -160,7 +160,7 @@ def determine_row_type(row, column_dict, DEBUG=False):
     is_record_row = None
     if DEBUG:
         print(row)
-        print("Looking at column {} which is {}".format(column_dict['cycle']['Cycle ID'], row[colnum(column_dict['cycle']['Cycle ID'])]))
+        print("Inspecting column {} in row {} for Cycle ID".format(column_dict['cycle']['Cycle ID'], row[colnum(column_dict['cycle']['Cycle ID'])]))
     if row[colnum(column_dict['cycle']['Cycle ID'])] != "":
         is_cycle_row = True
         is_step_row = False
