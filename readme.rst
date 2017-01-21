@@ -30,6 +30,14 @@ Currently only works with the "General Report" export type.
 .. _Python 2.7: https://www.python.org/downloads/
 .. _Origin: http://originlab.com/
 .. _Grace: http://plasma-gate.weizmann.ac.il/Grace/
+
+-------
+License
+-------
+
+This project is licensed under the terms of the `MIT license`_.
+
+.. _MIT license: LICENSE.txt
     
 ----
 TODO
