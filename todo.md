@@ -7,12 +7,12 @@
 - [ ] Put the number of the cycle at the beginning of the filename to make it easier to sort.
 - [ ] Generate an EZStat-style `.csv` file.
 - [ ] Add mass to outputs as a sanity check.
-- [*] Use existing mass if datafile contains it (e.g. "This datafile uses an active material mass of 1.3 mg. Continue using this value?")
-- [*] Capacity vs cycle number output file.
-- [*] Output a file that is convenient for plotting with `Origin`_.
-- [*] Reference by spreadsheet column name, not column number (e.g. 'A', not 0, and 'Q', not 16).
-- [*] Add a prompt so that it can be run successfully without arguments.
-- [*] Output directory containing files for individual cycles.
-- [*] Add an optional "mass?" prompt.
-- [*] Infer `.csv` data columns based on headers.
-- [*] Generate a dedicated Grace output file.
+- [x] Use existing mass if datafile contains it (e.g. "This datafile uses an active material mass of 1.3 mg. Continue using this value?")
+- [x] Capacity vs cycle number output file.
+- [x] Output a file that is convenient for plotting with `Origin`_.
+- [x] Reference by spreadsheet column name, not column number (e.g. 'A', not 0, and 'Q', not 16).
+- [x] Add a prompt so that it can be run successfully without arguments.
+- [x] Output directory containing files for individual cycles.
+- [x] Add an optional "mass?" prompt.
+- [x] Infer `.csv` data columns based on headers.
+- [x] Generate a dedicated Grace output file.
