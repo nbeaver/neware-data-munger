@@ -99,7 +99,40 @@ columns_BtsControl_xlsx = {
     },
 }
 
-data_formats = [columns_BTSDA, columns_BtsControl, columns_BtsControl_xlsx]
+
+unknown_format_1 = {
+    'headers': [
+        "Cycle ID		Cap_Chg(mAh)		Cap_DChg(mAh)		Specific Capacity-Chg(mAh/g)	Specific Capacity-Dchg(mAh/g)	Chg/DChg Efficiency(%)	Engy_Chg(mWh)		Engy_DChg(mWh)		REngy_Chg(mWh/g)	REngy_Dchg(mWh/g)	CC_Chg_Ratio(%)		CC_Chg_Cap(mAh)		Plat_Cap(mAh)		Plat_Capacity Density(mAh/g)	Plat_Efficiency(%)	Plat_Time(h:min:s.ms)	Capacitance_Chg(F)	Capacitance_DChg(F)	IR(mO)			Mid_value Voltage(V)	Discharge Fading Ratio(%)	Charge Time(h:min:s.ms)	Discharge Time(h:min:s.ms)	Charge IR(mO)		Discharge IR(mO)	End Temperature(oC)	Net Cap_DChg(mAh)	Net Engy_DChg(mWh)"
+    ],
+    'cycle' : {
+        'Cycle ID' : 'A',
+        'Cycle charge capacity [mAh]' : 'D',
+        'Cycle discharge capacity [mAh]' : 'G',
+        'Charge/Discharge Efficiency [%]' : 'P',
+        'Charge energy [mWh]' : 'S',
+        'Discharge energy [mWh]' : 'V',
+    },
+    'step' : {
+        'Step ID' : 'D',
+        'Step type' : 'G',
+        'Capacity [mAh]' : 'K',
+        'Energy [mWh]': 'Q',
+        'Start Voltage [V]' : 'Y',
+        'End Voltage [V]' : 'AB',
+    },
+    'record' : {
+        'Record ID' : 'G',
+        'Voltage [V]' : 'L',
+        'Current [mA]' : 'O',
+        'Capacity [mAh]' : 'U',
+        'Energy [mWh]' : 'AA',
+        'Timestamp' : 'AF',
+    },
+}
+# TODO: acceptable values for Step type, e.g. 'Rest', 'CC_Chg',
+# TODO: be better about sniffing headers.
+
+data_formats = [columns_BTSDA, columns_BtsControl, columns_BtsControl_xlsx, unknown_format_1]
 
 def colnum(column_letter):
     """Given a column letter from A to ZZ, return a column number starting from 0."""
@@ -215,13 +248,30 @@ def parse_general_report(input_file_path, DEBUG=False):
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
+
                 if DEBUG:
                     print("Parsing cycle #",cycle_id)
+
                 cycle_dict[cycle_id] = {}
-                capacity_charge = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
+
+                capacity_charge_string = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
+                try:
+                    capacity_charge = float(capacity_charge_string)
+                except ValueError:
+                    sys.stderr.write("Improper value for cycle charge capacity on line {}: {}\n".format(i, capacity_charge_string))
+                    raise
+
                 cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
-                capacity_discharge = cols[colnum(column_dict[row_type]['Cycle discharge capacity [mAh]'])]
+
+                capacity_discharge_string = cols[colnum(column_dict[row_type]['Cycle discharge capacity [mAh]'])]
+                try:
+                    capacity_discharge = float(capacity_discharge_string)
+                except ValueError:
+                    sys.stderr.write("Improper value for cycle discharge capacity on line {}: {}\n".format(i, capacity_discharge_string))
+                    raise
+
                 cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'] = capacity_discharge
+
             elif row_type == "step":
                 step_type = cols[colnum(column_dict[row_type]['Step type'])].strip()
                 if step_type == "CC_Chg":
@@ -233,6 +283,9 @@ def parse_general_report(input_file_path, DEBUG=False):
                     for var in vars_to_get:
                         cycle_dict[cycle_id]['discharge'][var] = []
                 elif step_type == "Rest":
+                    pass
+                elif step_type == "CV_Chg":
+                    # TODO: handle this properly
                     pass
                 else:
                     raise ValueError, "Unrecognized step type:" + step_type
@@ -255,6 +308,9 @@ def parse_general_report(input_file_path, DEBUG=False):
                     if 'mAh/g' in vars_to_get:
                         cycle_dict[cycle_id]['discharge']['mAh/g'].append(mAh_per_g)
                 elif step_type == "Rest":
+                    pass
+                elif step_type == "CV_Chg":
+                    # TODO: handle this properly
                     pass
                 else:
                     raise ValueError, "Unrecognized step type:" + step_type
@@ -292,7 +348,7 @@ def calculate_specific_capacities(cycle_dict, mass_g):
     #TODO: may need to split this into cycle summary calculations and record calculations.
     for cycle_id in cycle_dict.keys():
         for step_type in ['charge', 'discharge']:
-            capacity = float(cycle_dict[cycle_id]['Cycle '+step_type+' capacity [mAh]'])
+            capacity = cycle_dict[cycle_id]['Cycle '+step_type+' capacity [mAh]']
             cycle_dict[cycle_id]['Cycle '+step_type+' capacity [mAh/g]'] = str(capacity / mass_g)
 
             try:
