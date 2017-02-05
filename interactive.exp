@@ -45,7 +45,7 @@ if {$force_conservative} {
 set timeout -1
 spawn $env(SHELL)
 match_max 100000
-send -- "./extract-from-general-report.py\r"
+send -- "./extract_general_report.py\r"
 expect -exact "\r
 Enter filename:"
 send -- "example-data/extracted-from-BTSDA-2013-04-22/cell3_NMC_09_09.txt"

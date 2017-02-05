@@ -10,11 +10,11 @@ It requires `Python 2.7`_.
 
 Usage::
 
-    $ python extract-from-general-report.py --input input.txt --mass 1.5
+    $ python extract_general_report.py --input input.txt --mass 1.5
 
 or::
 
-    $ python extract-from-general-report.py
+    $ python extract_general_report.py
     Enter filename: input.txt
     Enter mass of active material in mg, or just press enter to calculate mAh:1.5
 
