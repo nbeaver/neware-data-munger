@@ -33,6 +33,7 @@ columns_BTSDA = {
         'Step time elapsed' : 'G',
         'Voltage [V]' : 'I',
         'Capacity [mAh]' : 'Q',
+        'Capacity [uAh]' : 'S',
         'Current [mA]' : 'K',
         'Timestamp' : 'AA',
     },
@@ -292,8 +293,9 @@ def parse_general_report(input_file_path, DEBUG=False):
             elif row_type == "record":
                 V = cols[colnum(column_dict[row_type]['Voltage [V]'])]
                 assert V != ""
-                mAh = cols[colnum(column_dict[row_type]['Capacity [mAh]'])]
-                assert mAh != ""
+                uAh = cols[colnum(column_dict[row_type]['Capacity [uAh]'])]
+                assert uAh != ""
+                mAh = str(float(uAh)/1000.0)
                 if 'mAh/g' in vars_to_get:
                     mAh_per_g = cols[colnum(column_dict['record']['Specific capacity [mAh/g]'])]
                     assert mAh_per_g != ""
