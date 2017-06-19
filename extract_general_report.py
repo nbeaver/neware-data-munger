@@ -131,7 +131,7 @@ unknown_format_1 = {
         'Timestamp' : 'AF',
     },
 }
-# TODO: acceptable values for Step type, e.g. 'Rest', 'CC_Chg',
+# TODO: check Step type makes sense, e.g. 'Rest', 'CC_Chg', 'CC_DChg'
 # TODO: be better about sniffing headers.
 
 data_formats = [columns_BTSDA, columns_BtsControl, columns_BtsControl_xlsx, unknown_format_1]
