@@ -11,8 +11,8 @@ import ConfigParser
 
 # DONE: dictionaries for associating values as strings to spreadsheet column letters.
 
-# mapping for BTSDA 7.4.1.824 general report (.txt)
 columns_BTSDA = {
+    'description' : 'BTSDA 7.4.1.824 general report (.txt)',
     'headers': [
         "CycleID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	RCap_Chg(mAh/g)  	RCap_DChg(mAh/g)  	Charge/Discharge Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Platform_Cap(mAh)  	Platform_RCap(mAh)  	Platfrom_Efficiency(%)  	Platform_Time(h:min:s.ms)  	Capacitance_Chg(F)  	Capacitance_DChg(F)  	rd(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(?)",
         "Cycle Index  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Capacity Density_Chg(mAh/g)  	Capacity Density_DChg(mAh/g)  	Charge/Discharge Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(F)  	Capacitance_DChg(F)  	rd(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(°C)",
@@ -39,8 +39,8 @@ columns_BTSDA = {
     },
 }
 
-# mapping for BtsControl general report (.txt)
 columns_BtsControl = {
+    'description' : 'BTS TestControl 5.3.0013(2010.6.2) general report (.txt)'
     'headers': [
         "Cycle ID  	Cap_Chg(mAh)  	Cap_DChg(mAh)  	Specific Capacity-Chg(mAh/g)  	Specific Capacity-Dchg(mAh/g)  	Chg/DChg Efficiency(%)  	Engy_Chg(mWh)  	Engy_DChg(mWh)  	REngy_Chg(mWh/g)  	REngy_Dchg(mWh/g)  	CC_Chg_Ratio(%)  	CC_Chg_Cap(mAh)  	Plat_Cap(mAh)  	Plat_Capacity Density(mAh)  	Plat_Efficiency(%)  	Plat_Time(h:min:s.ms)  	Capacitance_Chg(mF)  	Capacitance_DChg(mF)  	IR(mO)  	Mid_value Voltage(V)  	Discharge Fading Ratio(%)  	Charge Time(h:min:s.ms)  	Discharge Time(h:min:s.ms)  	Charge IR(mO)  	Discharge IR(mO)  	End Temperature(oC)",
     ],
@@ -69,8 +69,8 @@ columns_BtsControl = {
     },
 }
 
-# mapping for BtsControl general report (.xlsx exported to .tsv)
 columns_BtsControl_xlsx = {
+    'description' : 'BTS TestControl 5.3.0013(2010.6.2) general report (.xlsx exported to .tsv)'
     'headers': [
         "Cycle ID	Cap_Chg(mAh)	Cap_DChg(mAh)	Specific Capacity-Chg(mAh/g)	Specific Capacity-Dchg(mAh/g)	Chg/DChg Efficiency(%)	Engy_Chg(mWh)	Engy_DChg(mWh)	REngy_Chg(mWh/g)	REngy_Dchg(mWh/g)	CC_Chg_Ratio(%)	CC_Chg_Cap(mAh)	Plat_Cap(mAh)	Plat_Capacity Density(mAh)	Plat_Efficiency(%)	Plat_Time(h:min:s.ms)	Capacitance_Chg(mF)	Capacitance_DChg(mF)	IR(mΩ)	Mid_value Voltage(V)	Discharge Fading Ratio(%)	Charge Time(h:min:s.ms)	Discharge Time(h:min:s.ms)	Charge IR(mΩ)	Discharge IR(mΩ)	End Temperature(oC)",
     ],
@@ -102,6 +102,7 @@ columns_BtsControl_xlsx = {
 
 
 unknown_format_1 = {
+    'description' : 'Unknown format #1',
     'headers': [
         "Cycle ID		Cap_Chg(mAh)		Cap_DChg(mAh)		Specific Capacity-Chg(mAh/g)	Specific Capacity-Dchg(mAh/g)	Chg/DChg Efficiency(%)	Engy_Chg(mWh)		Engy_DChg(mWh)		REngy_Chg(mWh/g)	REngy_Dchg(mWh/g)	CC_Chg_Ratio(%)		CC_Chg_Cap(mAh)		Plat_Cap(mAh)		Plat_Capacity Density(mAh/g)	Plat_Efficiency(%)	Plat_Time(h:min:s.ms)	Capacitance_Chg(F)	Capacitance_DChg(F)	IR(mO)			Mid_value Voltage(V)	Discharge Fading Ratio(%)	Charge Time(h:min:s.ms)	Discharge Time(h:min:s.ms)	Charge IR(mO)		Discharge IR(mO)	End Temperature(oC)	Net Cap_DChg(mAh)	Net Engy_DChg(mWh)"
     ],
