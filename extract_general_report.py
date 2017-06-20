@@ -77,8 +77,8 @@ columns_BtsControl_xlsx = {
     ],
     'cycle' : {
         'Cycle ID' : 'A',
-        'Cycle charge capacity [mAh]' : 'C',
-        'Cycle discharge capacity [mAh]' : 'E',
+        'Cycle charge capacity [mAh]' : 'B',
+        'Cycle discharge capacity [mAh]' : 'C',
     },
     'step' : {
         'Step ID' : 'B',
