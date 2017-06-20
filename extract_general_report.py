@@ -49,12 +49,15 @@ columns_BtsControl = {
         'Cycle ID' : 'A',
         'Cycle charge capacity [mAh]' : 'C',
         'Cycle discharge capacity [mAh]' : 'E',
+        'Charge energy [mWh]' : 'M',
+        'Discharge energy [mWh]' : 'O',
     },
     'step' : {
         'Step ID' : 'C',
         'Step type' : 'E',
         'Duration [H:MM:SS.000]' : 'F',
         'Capacity [mAh]' : 'H',
+        'Energy [mWh]' : 'L',
     },
     'record' : {
         'Record ID' : 'E',
