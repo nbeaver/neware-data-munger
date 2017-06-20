@@ -189,7 +189,7 @@ def infer_input_file_format(input_file):
             if header_line == known_header:
                 return data_format
     else:
-        raise NotImplementedError, "Cannot recognize datafile type."
+        raise NotImplementedError("Cannot recognize datafile type.")
 
 def determine_row_type(row, column_dict, DEBUG=False):
     # TODO: use a better data structure, maybe an enum.
@@ -213,7 +213,7 @@ def determine_row_type(row, column_dict, DEBUG=False):
             if row[colnum(column_dict['record']['Record ID'])] != "":
                 is_record_row = True
             else:
-                raise ValueError, "Cannot determine row type for this row:"+str(row)
+                raise ValueError("Cannot determine row type for this row: {}".format(row))
     row_types = [is_cycle_row, is_step_row, is_record_row]
     # Check that we didn't miss a type of row.
     assert all(row_type is not None for row_type in row_types)
