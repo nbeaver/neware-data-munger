@@ -346,7 +346,7 @@ def calculate_specific_capacities(cycle_dict, mass_g):
     assert mass_g > 0
     try:
         if 'mAh/g' in cycle_dict[1]['charge'].keys():
-            logging.warning(" Overwriting existing specific capacities.\n")
+            logging.warning(" Overwriting existing specific capacities.")
     except KeyError:
         pass
     #TODO: may need to split this into cycle summary calculations and record calculations.
@@ -360,7 +360,7 @@ def calculate_specific_capacities(cycle_dict, mass_g):
                 for mAh in cycle_dict[cycle_id][step_type]['mAh']:
                     cycle_dict[cycle_id][step_type]['mAh/g'].append(str(float(mAh)/mass_g))
             except KeyError:
-                logging.warning(" No "+step_type+" for cycle #"+str(cycle_id)+"\n")
+                logging.warning("No {} for cycle #{}".format(step_type, cycle_id))
 
 def write_ini_file(data_path, cycle_dict, mass_g, path, filename_prefix):
     filename = filename_prefix + "_data.ini"
@@ -428,13 +428,13 @@ def write_individual_cycle_files(cycle_dict, capacity_type, path, filename_prefi
             this_cycle = cycle_dict[cycle_id]['charge']
             write_cycle(this_cycle, 'charge')
         except KeyError:
-            logging.warning(" No charge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No charge for cycle #{}".format(cycle_id))
 
         try:
             this_cycle = cycle_dict[cycle_id]['discharge']
             write_cycle(this_cycle, 'discharge')
         except KeyError:
-            logging.warning(" No discharge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No discharge for cycle #{}".format(cycle_id))
 
 def write_grace_input_file(cycle_dict, capacity_type, path, filename_prefix):
     filename = filename_prefix + "_grace_ascii.dat"
@@ -452,12 +452,12 @@ def write_grace_input_file(cycle_dict, capacity_type, path, filename_prefix):
         try:
             write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
-            logging.warning(" No charge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No charge for cycle #{}".format(cycle_id))
         step_type = 'discharge'
         try:
             write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
-            logging.warning(" No discharge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No discharge for cycle #{}".format(cycle_id))
 
     grace_input_file.close()
 
@@ -489,12 +489,12 @@ def write_gnuplot_input_file(cycle_dict, capacity_type, path, filename_prefix):
         try:
             write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
-            logging.warning(" No charge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No charge for cycle #{}".format(cycle_id))
         step_type = 'discharge'
         try:
             write_step(cycle_dict[cycle_id][step_type][capacity_type], cycle_dict[cycle_id][step_type]['V'], step_type)
         except KeyError:
-            logging.warning(" No discharge for cycle #"+str(cycle_id)+"\n")
+            logging.warning("No discharge for cycle #{}".format(cycle_id))
 
     gnuplot_input_file.write("EOF\n")
     gnuplot_input_file.close()
@@ -513,7 +513,7 @@ def write_origin_input_file(cycle_dict, capacity_type, path, filename_prefix):
                 columns.append([step_type + '_' + str(cycle_id), 'V'] + cycle_dict[cycle_id][step_type]['V'])
             except KeyError:
                 #TODO: use warnings module to make these actual warnings.
-                logging.warning(" No "+step_type+" for cycle #"+str(cycle_id)+"\n")
+                logging.warning("No {} for cycle #{}".format(step_type, cycle_id))
     # Now we need to turn the varying-length columns into rows so we can easily write them to a file.
     # https://muffinresearch.co.uk/python-transposing-lists-with-map-and-zip/
     rows = map(None, *columns)
@@ -556,7 +556,7 @@ def main(DEBUG=False):
         mass_g = infer_mass(cycle_dict)
         if args.mass:
             if mass_g:
-                logging.warning(" Mass inferred from file is {}mg but this is overriden by required value of {}mg\n".format(1000.0*mass_g, args.mass))
+                logging.warning(" Mass inferred from file is {}mg but this is overriden by required value of {}mg".format(1000.0*mass_g, args.mass))
             require_mass_calculations = True
             mass_g = float(args.mass)/1000.0
         else:
