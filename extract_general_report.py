@@ -191,14 +191,12 @@ def infer_input_file_format(input_file):
     else:
         raise NotImplementedError("Cannot recognize datafile type.")
 
-def determine_row_type(row, column_dict, DEBUG=False):
+def determine_row_type(row, column_dict):
     # TODO: use a better data structure, maybe an enum.
     is_cycle_row = None
     is_step_row = None
     is_record_row = None
-    if DEBUG:
-        print(row)
-        print("Inspecting column {} in row {} for Cycle ID".format(column_dict['cycle']['Cycle ID'], row[colnum(column_dict['cycle']['Cycle ID'])]))
+    logging.debug("Inspecting column {} in row {} for Cycle ID".format(column_dict['cycle']['Cycle ID'], row[colnum(column_dict['cycle']['Cycle ID'])]))
     if row[colnum(column_dict['cycle']['Cycle ID'])] != "":
         is_cycle_row = True
         is_step_row = False
@@ -227,13 +225,14 @@ def determine_row_type(row, column_dict, DEBUG=False):
     elif is_record_row:
         return "record"
 
-def parse_general_report(input_file_path, DEBUG=False):
+def parse_general_report(input_file_path):
     cycle_dict = collections.OrderedDict()
     # example structure:
     # cycle_dict[cycle_id]['charge']['V'] = ['1.22', '1.23', ...]
 
     with open(input_file_path) as general_report:
         column_dict = infer_input_file_format(general_report)
+        logging.info("Detected data format '{}'".format(column_dict['description']))
         assert 'Cycle discharge capacity [mAh]' in column_dict['cycle'].keys()
         assert 'Voltage [V]' in column_dict['record'].keys()
         if 'Specific capacity [mAh/g]' in column_dict['record'].keys():
@@ -251,9 +250,7 @@ def parse_general_report(input_file_path, DEBUG=False):
             if row_type == "cycle":
                 cycle_id = int(cols[colnum(column_dict[row_type]['Cycle ID'])])
                 assert cycle_id not in cycle_dict.keys()
-
-                if DEBUG:
-                    print("Parsing cycle #",cycle_id)
+                logging.debug("Parsing cycle #".format(cycle_id))
 
                 cycle_dict[cycle_id] = {}
 
@@ -350,7 +347,7 @@ def calculate_specific_capacities(cycle_dict, mass_g):
     assert mass_g > 0
     try:
         if 'mAh/g' in cycle_dict[1]['charge'].keys():
-            logging.warning(" Overwriting existing specific capacities.")
+            logging.warning("Overwriting existing specific capacities.")
     except KeyError:
         pass
     #TODO: may need to split this into cycle summary calculations and record calculations.
@@ -547,20 +544,23 @@ def mass_from_user():
         require_mass_calculations = False
     return mass_g, require_mass_calculations
 
-def main(DEBUG=False):
+def main():
     require_mass_calculations = None
     if len(sys.argv) > 1:
         # Parse arguments and run non-interactively.
         parser = argparse.ArgumentParser(description='This is a script for processing data from a NEWARE battery cycler.')
         parser.add_argument('-m', '--mass', help='Mass in milligrams',required=False)
         parser.add_argument('-i', '--input', help='Input file',required=True)
+        parser.add_argument('-v', '--verbose', action='store_const', dest='loglevel', const=logging.INFO, default=logging.WARNING)
+        parser.add_argument
         args = parser.parse_args()
+        logging.basicConfig(level=args.loglevel)
         input_file_path = args.input
         cycle_dict = parse_general_report(input_file_path)
         mass_g = infer_mass(cycle_dict)
         if args.mass:
             if mass_g:
-                logging.warning(" Mass inferred from file is {}mg but this is overriden by required value of {}mg".format(1000.0*mass_g, args.mass))
+                logging.warning("Mass inferred from file is {}mg but this is overriden by required value of {}mg".format(1000.0*mass_g, args.mass))
             require_mass_calculations = True
             mass_g = float(args.mass)/1000.0
         else:
@@ -603,8 +603,7 @@ def main(DEBUG=False):
     input_file_path_no_extension = os.path.splitext(input_file_path)[0]
     basename_no_extension = os.path.splitext(os.path.basename(input_file_path))[0]
     out_dir = input_file_path_no_extension + "_data_extracted"
-    if DEBUG:
-        print("Saving to folder ",out_dir)
+    logging.debug("Saving to folder {}".format(out_dir))
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
 
