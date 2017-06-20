@@ -259,8 +259,7 @@ def parse_general_report(input_file_path, DEBUG=False):
                 capacity_charge_string = cols[colnum(column_dict[row_type]['Cycle charge capacity [mAh]'])]
                 try:
                     capacity_charge = float(capacity_charge_string)
-                except ValueError:
-                    sys.stderr.write("Improper value for cycle charge capacity on line {}: {}\n".format(i, capacity_charge_string))
+                except ValueError("Improper value for cycle charge capacity on line {}: {}\n".format(i, capacity_charge_string))
                     raise
 
                 cycle_dict[cycle_id]['Cycle charge capacity [mAh]'] = capacity_charge
@@ -268,8 +267,7 @@ def parse_general_report(input_file_path, DEBUG=False):
                 capacity_discharge_string = cols[colnum(column_dict[row_type]['Cycle discharge capacity [mAh]'])]
                 try:
                     capacity_discharge = float(capacity_discharge_string)
-                except ValueError:
-                    sys.stderr.write("Improper value for cycle discharge capacity on line {}: {}\n".format(i, capacity_discharge_string))
+                except ValueError("Improper value for cycle discharge capacity on line {}: {}\n".format(i, capacity_discharge_string))
                     raise
 
                 cycle_dict[cycle_id]['Cycle discharge capacity [mAh]'] = capacity_discharge
