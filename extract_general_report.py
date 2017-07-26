@@ -402,7 +402,9 @@ def write_cycle_summary_file(cycle_dict, mass_g, path, filename_prefix):
             capacity_charge = float(cycle_dict[cycle_id]['Cycle charge capacity [mAh]']) / mass_g
             capacity_discharge = float(cycle_dict[cycle_id]['Cycle discharge capacity [mAh]']) / mass_g
 
-        cycle_summary_file.write(delimiter.join([str(cycle_id), str(capacity_charge), str(capacity_discharge)]) + "\n")
+        row = [cycle_id, capacity_charge, capacity_discharge]
+        row_string = delimiter.join([str(x) for x in row]) + "\n"
+        cycle_summary_file.write(row_string)
 
     cycle_summary_file.close()
 
