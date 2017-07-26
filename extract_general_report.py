@@ -406,6 +406,22 @@ def write_cycle_summary_file(cycle_dict, mass_g, path, filename_prefix):
 
     cycle_summary_file.close()
 
+def write_grace_cycle_summary(cycle_dict, capacity_type, path, filename_prefix):
+    assert capacity_type == 'mAh' or capacity_type == 'mAh/g'
+    filename = filename_prefix + "_grace_cycle_summary.dat"
+    filepath = os.path.join(path, filename)
+    fp = open(filepath, 'w')
+
+    def write_cycles(cycle_key):
+        for cycle_id in cycle_dict.keys():
+            capacity = cycle_dict[cycle_id][cycle_key]
+            fp.write('{} {}\n'.format(cycle_id, capacity))
+
+    write_cycles('Cycle charge capacity ['+capacity_type+']')
+    fp.write('\n')
+    write_cycles('Cycle discharge capacity ['+capacity_type+']')
+    fp.close()
+
 def write_individual_cycle_file(x_list, x_name, y_list, y_name, filepath):
     header_comment_character = '#'
     delimiter = '\t'
@@ -614,6 +630,7 @@ def main():
     write_cycle_summary_file(cycle_dict, mass_g, out_dir, basename_no_extension)
     write_individual_cycle_files(cycle_dict, capacity_type, out_dir, basename_no_extension)
     write_grace_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
+    write_grace_cycle_summary(cycle_dict, capacity_type, out_dir, basename_no_extension)
     write_origin_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
     write_gnuplot_input_file(cycle_dict, capacity_type, out_dir, basename_no_extension)
 
