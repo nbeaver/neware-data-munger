@@ -390,9 +390,10 @@ def write_cycle_summary_file(cycle_dict, mass_g, path, filename_prefix):
     else:
         capacity_type = "[mAh]"
 
-    cycle_summary_file.write(header_comment_character + "CycleID"  + delimiter)
-    cycle_summary_file.write("charge capacity "    + capacity_type + delimiter)
-    cycle_summary_file.write("discharge capacity " + capacity_type + "\n")
+    cycle_summary_file.write(header_comment_character + "CycleID")
+    cycle_summary_file.write(delimiter + "charge capacity "    + capacity_type)
+    cycle_summary_file.write(delimiter + "discharge capacity " + capacity_type)
+    cycle_summary_file.write("\n")
 
     for cycle_id in cycle_dict.keys():
         if mass_g == None:
